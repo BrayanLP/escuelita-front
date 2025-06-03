@@ -1,42 +1,95 @@
+
+'use client';
+
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
-import { getUserProfileById, userProfiles, courses as allCourses, forumThreads } from '@/lib/placeholder-data';
-import type { Course, ForumThread as UserForumThread } from '@/lib/types';
+import { notFound, useParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { getUserProfileById, userProfiles as allUserProfiles, courses as allCourses, forumThreads } from '@/lib/placeholder-data';
+import type { Course, ForumThread as UserForumThread, UserProfileData } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { Briefcase, CalendarDays, Mail, MapPin, Users, BookOpen, MessageSquare } from 'lucide-react';
+import { Briefcase, CalendarDays, Mail, MapPin, Users, BookOpen, MessageSquare, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
-export async function generateStaticParams() {
-  return userProfiles.map((user) => ({
-    userId: user.id,
-  }));
-}
 
-export default async function UserProfilePage({ params }: { params: { userId: string } }) {
-  const user = getUserProfileById(params.userId);
+export default function UserProfilePage() {
+  const { user: authUser, loading: authLoading } = useRequireAuth(); // Ensures user is logged in
+  const params = useParams();
+  const userId = params.userId as string;
 
-  if (!user) {
-    notFound();
+  const [userProfile, setUserProfile] = useState<UserProfileData | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // This effect fetches the specific profile data based on userId from URL
+  useEffect(() => {
+    if (userId) {
+      const fetchedProfile = getUserProfileById(userId);
+      if (fetchedProfile) {
+        setUserProfile(fetchedProfile);
+      } else {
+        // If profile not found in placeholder data, and it's not the authUser's own new profile,
+        // you might want to show a specific message or redirect.
+        // For now, we let it potentially show "Profile not found" or a generic message.
+        // If it's the authenticated user and their profile doesn't exist in placeholder:
+        // This is where you might fetch from a DB or show a "create profile" state.
+        // For this demo, if it's the authUser's ID and not in placeholder data, we can mock a basic profile.
+        if (authUser && authUser.uid === userId && !fetchedProfile) {
+          setUserProfile({
+            id: authUser.uid,
+            name: authUser.displayName || 'New User',
+            email: authUser.email || 'No email',
+            avatarUrl: authUser.photoURL || 'https://placehold.co/150x150.png',
+            bio: 'Welcome to Escuelita!',
+            joinedDate: authUser.metadata.creationTime || new Date().toISOString(),
+            completedCourses: [],
+            joinedCommunities: [],
+            discussionsParticipated: []
+          });
+        }
+      }
+    }
+    setIsLoading(false);
+  }, [userId, authUser]);
+
+  if (authLoading || isLoading || !authUser) { // Also wait for authUser from useRequireAuth
+    return (
+      <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)]">
+        <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
+        <p className="text-xl text-muted-foreground">Loading profile...</p>
+      </div>
+    );
   }
+  
+  // At this point, authUser is guaranteed to be non-null by useRequireAuth
+  // userProfile might be undefined if not found and not the authUser's own profile
+  if (!userProfile) {
+    // Check if the user is trying to view their own profile but it's not in placeholder-data
+    // This scenario is partially handled in useEffect for a basic display
+    // If it's another user's profile that is not found:
+     notFound(); // Or show a custom "profile not found" component
+     return null;
+  }
+
 
   return (
     <div className="space-y-8">
       <Card className="overflow-hidden shadow-lg">
         <CardHeader className="bg-muted/30 p-6 md:p-8 flex flex-col md:flex-row items-start gap-6">
           <Avatar className="h-32 w-32 border-4 border-background shadow-md">
-            <AvatarImage src={user.avatarUrl} alt={user.name} data-ai-hint="person portrait" />
-            <AvatarFallback className="text-4xl">{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarImage src={userProfile.avatarUrl} alt={userProfile.name} data-ai-hint="person portrait" />
+            <AvatarFallback className="text-4xl">{userProfile.name.substring(0, 2).toUpperCase()}</AvatarFallback>
           </Avatar>
           <div className="pt-2">
-            <h1 className="text-3xl md:text-4xl font-headline font-bold text-primary">{user.name}</h1>
-            <p className="text-lg text-muted-foreground mt-1">{user.bio || 'No bio provided.'}</p>
+            <h1 className="text-3xl md:text-4xl font-headline font-bold text-primary">{userProfile.name}</h1>
+            <p className="text-lg text-muted-foreground mt-1">{userProfile.bio || 'No bio provided.'}</p>
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground mt-3">
-              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {user.email}</span>
-              <span className="flex items-center gap-1.5"><CalendarDays className="w-4 h-4" /> Joined {format(new Date(user.joinedDate), 'MMMM yyyy')}</span>
+              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {userProfile.email}</span>
+              <span className="flex items-center gap-1.5"><CalendarDays className="w-4 h-4" /> Joined {format(new Date(userProfile.joinedDate), 'MMMM yyyy')}</span>
             </div>
           </div>
         </CardHeader>
@@ -59,12 +112,12 @@ export default async function UserProfilePage({ params }: { params: { userId: st
           <Card>
             <CardHeader>
               <CardTitle className="font-headline text-2xl">Completed Courses</CardTitle>
-              <CardDescription>Courses {user.name} has successfully completed.</CardDescription>
+              <CardDescription>Courses {userProfile.name} has successfully completed.</CardDescription>
             </CardHeader>
             <CardContent>
-              {user.completedCourses.length > 0 ? (
+              {userProfile.completedCourses.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {user.completedCourses.map((course: Pick<Course, 'id' | 'title' | 'imageUrl' | 'category'>) => (
+                  {userProfile.completedCourses.map((course: Pick<Course, 'id' | 'title' | 'imageUrl' | 'category'>) => (
                     <Link key={course.id} href={`/courses/${course.id}`} className="block group">
                       <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
                         <div className="relative aspect-video">
@@ -95,13 +148,13 @@ export default async function UserProfilePage({ params }: { params: { userId: st
           <Card>
             <CardHeader>
               <CardTitle className="font-headline text-2xl">Discussions</CardTitle>
-              <CardDescription>Forum threads {user.name} has participated in.</CardDescription>
+              <CardDescription>Forum threads {userProfile.name} has participated in.</CardDescription>
             </CardHeader>
             <CardContent>
-              {user.discussionsParticipated.length > 0 ? (
+              {userProfile.discussionsParticipated.length > 0 ? (
                 <ul className="space-y-3">
-                  {user.discussionsParticipated.map((thread: Pick<UserForumThread, 'id' | 'title' | 'courseId'>) => {
-                    const fullThreadDetails = forumThreads.find(ft => ft.id === thread.id); // Get full thread for courseId check
+                  {userProfile.discussionsParticipated.map((thread: Pick<UserForumThread, 'id' | 'title' | 'courseId'>) => {
+                    const fullThreadDetails = forumThreads.find(ft => ft.id === thread.id);
                     const courseForThread = fullThreadDetails?.courseId ? allCourses.find(c => c.id === fullThreadDetails.courseId) : undefined;
                     const linkHref = fullThreadDetails?.courseId 
                       ? `/courses/${fullThreadDetails.courseId}/forum/${thread.id}` 
@@ -137,12 +190,12 @@ export default async function UserProfilePage({ params }: { params: { userId: st
            <Card>
             <CardHeader>
               <CardTitle className="font-headline text-2xl">Joined Communities</CardTitle>
-              <CardDescription>Communities {user.name} is a part of.</CardDescription>
+              <CardDescription>Communities {userProfile.name} is a part of.</CardDescription>
             </CardHeader>
             <CardContent>
-              {user.joinedCommunities.length > 0 ? (
+              {userProfile.joinedCommunities.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {user.joinedCommunities.map(community => (
+                  {userProfile.joinedCommunities.map(community => (
                      <Card key={community.id} className="flex items-center gap-3 p-3 hover:shadow-md transition-shadow">
                       {community.imageUrl && <Image src={community.imageUrl} alt={community.name} width={40} height={40} className="rounded-full" data-ai-hint="community logo"/>}
                       <span className="font-semibold">{community.name}</span>

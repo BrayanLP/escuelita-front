@@ -1,25 +1,44 @@
 
 'use client';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Menu } from 'lucide-react';
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
+import { Menu, LogOut, UserCircle, LogInIcon, UserPlus } from 'lucide-react';
 import { EscuelitaLogo } from './Icons';
 import { cn } from '@/lib/utils';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
-const navLinks = [
+const baseNavLinks = [
   { href: '/', label: 'Cursos' },
   { href: '/community', label: 'Comunidad' },
   { href: '/calendar', label: 'Calendario' },
   { href: '/members', label: 'Miembros' },
-  // { href: '/community/about', label: 'Acerca de' }, // "Acerca de" can be linked from the Community page
-  // Keeping profile link for now, can be changed to dynamic later
-  { href: '/profile/user1', label: 'Perfil' }, 
 ];
 
 export function Navbar() {
   const pathname = usePathname();
+  const { user, signOut: firebaseSignOut, loading } = useAuth();
+  const { toast } = useToast();
+  const router = useRouter();
+
+  const handleSignOut = async () => {
+    try {
+      await firebaseSignOut();
+      toast({ title: "Logged Out", description: "You have been successfully logged out." });
+      router.push('/auth/login');
+    } catch (error) {
+      toast({ title: "Logout Failed", description: "Could not log out. Please try again.", variant: "destructive" });
+    }
+  };
+
+  const dynamicNavLinks = user
+    ? [
+        ...baseNavLinks,
+        { href: `/profile/${user.uid}`, label: 'Perfil' },
+      ]
+    : baseNavLinks;
 
   return (
     <header className="bg-card border-b border-border sticky top-0 z-50 shadow-sm">
@@ -30,7 +49,7 @@ export function Navbar() {
         </Link>
 
         <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
+          {dynamicNavLinks.map((link) => (
             <Button key={link.href} variant="ghost" asChild
               className={cn(
                 "text-sm text-foreground/70 hover:text-foreground hover:bg-accent/50",
@@ -41,6 +60,21 @@ export function Navbar() {
               <Link href={link.href}>{link.label}</Link>
             </Button>
           ))}
+          {!loading && !user && (
+            <>
+              <Button variant="ghost" asChild className="text-sm text-foreground/70 hover:text-foreground hover:bg-accent/50">
+                <Link href="/auth/login"><LogInIcon className="mr-1.5 h-4 w-4" /> Login</Link>
+              </Button>
+              <Button variant="default" size="sm" asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <Link href="/auth/signup"><UserPlus className="mr-1.5 h-4 w-4" /> Sign Up</Link>
+              </Button>
+            </>
+          )}
+          {!loading && user && (
+            <Button variant="ghost" onClick={handleSignOut} className="text-sm text-foreground/70 hover:text-destructive hover:bg-destructive/10">
+              <LogOut className="mr-1.5 h-4 w-4" /> Logout
+            </Button>
+          )}
         </nav>
 
         <div className="md:hidden">
@@ -51,26 +85,54 @@ export function Navbar() {
                 <span className="sr-only">Abrir menú</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px]">
-              <div className="flex flex-col gap-2 py-6">
-                <Link href="/" className="flex items-center gap-2 text-primary mb-4 px-3">
-                  <EscuelitaLogo className="h-8 w-8" />
-                  <span className="text-2xl font-headline font-semibold">Escuelita</span>
-                </Link>
-                {navLinks.map((link) => (
-                  <Button
-                    key={link.href}
-                    variant="ghost"
-                    asChild
-                    className={cn(
-                      "justify-start text-base py-3 px-3 h-auto",
-                       pathname === link.href ? "text-primary font-semibold bg-accent" : 
-                       (pathname.startsWith(link.href) && link.href !== '/') ? "text-primary bg-accent/80" : "text-foreground/80"
-                    )}
-                  >
-                    <Link href={link.href}>{link.label}</Link>
-                  </Button>
-                ))}
+            <SheetContent side="right" className="w-[280px] sm:w-[320px] p-0">
+              <div className="flex flex-col h-full">
+                <div className="p-4 border-b">
+                  <Link href="/" className="flex items-center gap-2 text-primary">
+                    <EscuelitaLogo className="h-8 w-8" />
+                    <span className="text-2xl font-headline font-semibold">Escuelita</span>
+                  </Link>
+                </div>
+                <nav className="flex-grow py-4 px-2 space-y-1">
+                  {dynamicNavLinks.map((link) => (
+                    <SheetClose asChild key={link.href}>
+                      <Button
+                        variant="ghost"
+                        asChild
+                        className={cn(
+                          "justify-start text-base py-3 px-3 h-auto w-full",
+                           pathname === link.href ? "text-primary font-semibold bg-accent" : 
+                           (pathname.startsWith(link.href) && link.href !== '/') ? "text-primary bg-accent/80" : "text-foreground/80"
+                        )}
+                      >
+                        <Link href={link.href}>{link.label}</Link>
+                      </Button>
+                    </SheetClose>
+                  ))}
+                </nav>
+                <div className="p-4 border-t mt-auto">
+                  {!loading && !user && (
+                    <div className="space-y-2">
+                      <SheetClose asChild>
+                        <Button variant="outline" asChild className="w-full">
+                           <Link href="/auth/login"><LogInIcon className="mr-2"/>Login</Link>
+                        </Button>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Button variant="default" asChild className="w-full bg-primary hover:bg-primary/90">
+                           <Link href="/auth/signup"><UserPlus className="mr-2"/>Sign Up</Link>
+                        </Button>
+                      </SheetClose>
+                    </div>
+                  )}
+                  {!loading && user && (
+                     <SheetClose asChild>
+                        <Button variant="outline" onClick={handleSignOut} className="w-full">
+                          <LogOut className="mr-2" /> Logout
+                        </Button>
+                      </SheetClose>
+                  )}
+                </div>
               </div>
             </SheetContent>
           </Sheet>

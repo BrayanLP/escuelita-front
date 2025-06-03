@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getThreadById, addPostToThread as addPostToThreadData, forumThreads as allThreads } from '@/lib/placeholder-data';
+import { getThreadById, addPostToThread as addPostToThreadData } from '@/lib/placeholder-data';
 import type { ForumPost, ForumThread } from '@/lib/types';
 import { ForumPostCard } from '@/app/components/ForumPostCard';
 import { CommentForm } from '@/app/components/CommentForm';
@@ -12,14 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export async function generateStaticParams() {
-  const paths: { threadId: string }[] = [];
-  // Filter for community threads (no courseId) for static generation
-  allThreads.filter(t => !t.courseId).forEach(thread => {
-      paths.push({ threadId: thread.id });
-  });
-  return paths;
-}
+// generateStaticParams was removed as it cannot be used with 'use client'
 
 export default function CommunityThreadPage({ params }: { params: { threadId: string } }) {
   const [thread, setThread] = useState<ForumThread | undefined>(undefined);

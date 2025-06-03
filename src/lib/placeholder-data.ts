@@ -1,4 +1,5 @@
-import type { Course, Instructor, Review, SyllabusModule, UserProfileData, ForumThread, ForumPost } from './types';
+
+import type { Course, Instructor, Review, Lesson, UserProfileData, ForumThread, ForumPost } from './types';
 
 const instructors: Instructor[] = [
   { id: 'inst1', name: 'Dr. Ada Lovelace', bio: 'Pioneer in computer science and expert in algorithms.', avatarUrl: 'https://placehold.co/100x100.png' },
@@ -12,21 +13,37 @@ const reviews: Review[] = [
   { id: 'rev3', userId: 'user3', userName: 'Charlie Chaplin', rating: 5, comment: 'Highly recommended for beginners!', createdAt: new Date(Date.now() - 86400000 * 2).toISOString(), userAvatarUrl: 'https://placehold.co/40x40.png' },
 ];
 
-const syllabusModules: SyllabusModule[] = [
+const sampleLessons: Lesson[] = [
   { 
-    id: 'mod1', title: 'Module 1: Introduction', description: 'Fundamentals and core concepts.',
-    lessons: [
-      { id: 'les1.1', title: 'Welcome to the Course', duration: '10min' },
-      { id: 'les1.2', title: 'Setting up Your Environment', duration: '25min' },
-    ]
+    id: 'les1.1', title: 'Welcome & Course Overview', duration: '10min', 
+    videoPlaceholderImageUrl: 'https://placehold.co/800x450.png',
+    videoImageHint: 'welcome presentation',
+    resources: [{id: 'res1.1.1', name: 'Course Syllabus PDF', url: '#' }] 
   },
   { 
-    id: 'mod2', title: 'Module 2: Advanced Topics', description: 'Diving deeper into the subject matter.',
-    lessons: [
-      { id: 'les2.1', title: 'Advanced Techniques', duration: '45min' },
-      { id: 'les2.2', title: 'Project Work', duration: '1hr 30min' },
+    id: 'les1.2', title: 'Setting Up Your Dev Environment', duration: '25min',
+    videoPlaceholderImageUrl: 'https://placehold.co/800x450.png',
+    videoImageHint: 'code editor setup'
+  },
+  { 
+    id: 'les2.1', title: 'Core Concept: The DOM', duration: '45min',
+    videoPlaceholderImageUrl: 'https://placehold.co/800x450.png',
+    videoImageHint: 'abstract network'
+  },
+  { 
+    id: 'les2.2', title: 'Building Your First Component', duration: '1hr 30min',
+    videoPlaceholderImageUrl: 'https://placehold.co/800x450.png',
+    videoImageHint: 'team collaboration',
+    resources: [
+      {id: 'res2.2.1', name: 'Starter Code (zip)', url: '#' },
+      {id: 'res2.2.2', name: 'Completed Example (zip)', url: '#' }
     ]
   },
+  {
+    id: 'les3.1', title: 'Advanced State Management', duration: '1hr 15min',
+    videoPlaceholderImageUrl: 'https://placehold.co/800x450.png',
+    videoImageHint: 'complex diagram'
+  }
 ];
 
 export const courses: Course[] = [
@@ -42,7 +59,7 @@ export const courses: Course[] = [
     price: 49.99,
     currency: 'USD',
     instructors: [instructors[0]],
-    syllabus: syllabusModules,
+    lessons: sampleLessons.slice(0, 3), // Assign some lessons
     reviews: [reviews[0], reviews[1]],
     rating: 4.5,
     enrollmentCount: 1250,
@@ -59,7 +76,7 @@ export const courses: Course[] = [
     price: 79.99,
     currency: 'USD',
     instructors: [instructors[1], instructors[0]],
-    syllabus: syllabusModules,
+    lessons: sampleLessons.slice(1, 4), // Assign different lessons
     reviews: [reviews[2]],
     rating: 4.8,
     enrollmentCount: 870,
@@ -76,7 +93,7 @@ export const courses: Course[] = [
     price: 99.99,
     currency: 'USD',
     instructors: [instructors[2]],
-    syllabus: syllabusModules,
+    lessons: sampleLessons, // Assign all lessons
     reviews: [],
     rating: 4.2,
     enrollmentCount: 2100,
@@ -122,21 +139,17 @@ export const userProfiles: UserProfileData[] = [
 ];
 
 const forumPosts: ForumPost[] = [
-    // Course Thread Posts
     { id: 'post1-thread1-course1', userId: 'user1', userName: 'Alice Wonderland', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'I am having some trouble understanding how flexbox works for responsive layouts. Can anyone help?', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
     { id: 'post2-thread1-course1', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Flexbox can be tricky! What specific part are you struggling with? Maybe share some code?', createdAt: new Date(Date.now() - 86400000 * 1.5).toISOString() },
     { id: 'post3-thread1-course1', userId: 'user1', userName: 'Alice Wonderland', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Thanks Bob! It\'s mostly about `justify-content` and `align-items` when the container resizes.', createdAt: new Date(Date.now() - 86400000 * 1).toISOString() },
     { id: 'post1-thread1-course2', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Closures in JavaScript seem like magic. How do they really work under the hood?', createdAt: new Date(Date.now() - 86400000 * 4).toISOString() },
     { id: 'post2-thread1-course2', userId: 'inst2', userName: 'Prof. Alan Turing', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'A closure gives you access to an outer function’s scope from an inner function. Think of it as a function bundling its lexical environment.', createdAt: new Date(Date.now() - 86400000 * 3.5).toISOString() },
-    
-    // Community Thread Posts
     { id: 'post1-community-thread1', userId: 'user1', userName: 'Alice Wonderland', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Hey everyone! What are some of the most exciting web development trends you are seeing this year?', createdAt: new Date(Date.now() - 86400000 * 1).toISOString() },
     { id: 'post2-community-thread1', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'I think AI integration into web apps is huge. Also, server components are changing how we build things.', createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString() },
     { id: 'post1-community-thread2', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'What are your go-to frontend frameworks these days? Still React, or are Svelte/Vue gaining more ground for you?', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
 ];
 
 export let forumThreads: ForumThread[] = [
-  // Course-specific threads
   { 
     id: 'thread1-course1', 
     courseId: 'course1', 
@@ -170,7 +183,6 @@ export let forumThreads: ForumThread[] = [
     postCount: 2,
     posts: [forumPosts[3], forumPosts[4]]
   },
-  // Community threads (no courseId)
   {
     id: 'community-thread1',
     title: 'General Chat about Web Development Trends',
@@ -211,23 +223,20 @@ export const addPostToThread = (threadId: string, postContent: string, userId: s
       content: postContent,
       createdAt: new Date().toISOString(),
     };
-    thread.posts.push(newPost); // Mutates the original array in placeholder data
+    thread.posts.push(newPost);
     thread.postCount = thread.posts.length;
     thread.lastActivityAt = new Date().toISOString();
-    // Update the global forumThreads array if you need to persist changes across page loads (for mock data)
-    // forumThreads = forumThreads.map(t => t.id === threadId ? thread : t);
     return newPost;
   }
   return undefined;
 };
 
-// Renamed from addThreadToCourse, courseId is now optional
 export const createThread = (title: string, firstPostContent: string, userId: string, courseId?: string): ForumThread | undefined => {
   const user = getUserProfileById(userId);
   if (!user) return undefined;
   if (courseId) {
       const course = getCourseById(courseId);
-      if (!course) return undefined; // Course must exist if courseId is provided
+      if (!course) return undefined; 
   }
 
   const newThreadId = `thread${Date.now()}${courseId ? `-${courseId}` : '-community'}`;
@@ -250,7 +259,7 @@ export const createThread = (title: string, firstPostContent: string, userId: st
     postCount: 1,
     posts: [firstPost],
   };
-  forumThreads.push(newThread); // Mutates placeholder data
+  forumThreads.push(newThread);
   return newThread;
 };
 

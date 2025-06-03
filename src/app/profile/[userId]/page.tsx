@@ -2,19 +2,18 @@
 'use client';
 
 import Image from 'next/image';
-import { notFound, useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { getUserProfileById, userProfiles as allUserProfiles, courses as allCourses, forumThreads } from '@/lib/placeholder-data';
-import type { Course, ForumThread as UserForumThread, UserProfileData } from '@/lib/types';
+import { courses as allCourses, forumThreads } from '@/lib/placeholder-data'; // Keep if still needed for related data
+import type { Course, ForumThread as UserForumThread } from '@/lib/types';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Briefcase, CalendarDays, Mail, MapPin, Users, BookOpen, MessageSquare, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { useRequireAuth } from '@/hooks/useRequireAuth';
-import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';import { useSupabase } from '@/contexts/SupabaseContext';
+import { useRouter } from 'next/navigation'; // Import useRouter for potential redirects or notFound
 
 
 export default function UserProfilePage() {
@@ -22,41 +21,36 @@ export default function UserProfilePage() {
   const params = useParams();
   const userId = params.userId as string;
 
-  const [userProfile, setUserProfile] = useState<UserProfileData | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // This effect fetches the specific profile data based on userId from URL
-  useEffect(() => {
-    if (userId) {
-      const fetchedProfile = getUserProfileById(userId);
-      if (fetchedProfile) {
-        setUserProfile(fetchedProfile);
-      } else {
-        // If profile not found in placeholder data, and it's not the authUser's own new profile,
-        // you might want to show a specific message or redirect.
-        // For now, we let it potentially show "Profile not found" or a generic message.
-        // If it's the authenticated user and their profile doesn't exist in placeholder:
-        // This is where you might fetch from a DB or show a "create profile" state.
-        // For this demo, if it's the authUser's ID and not in placeholder data, we can mock a basic profile.
-        if (authUser && authUser.uid === userId && !fetchedProfile) {
-          setUserProfile({
-            id: authUser.uid,
-            name: authUser.displayName || 'New User',
-            email: authUser.email || 'No email',
-            avatarUrl: authUser.photoURL || 'https://placehold.co/150x150.png',
-            bio: 'Welcome to Escuelita!',
-            joinedDate: authUser.metadata.creationTime || new Date().toISOString(),
-            completedCourses: [],
-            joinedCommunities: [],
-            discussionsParticipated: []
-          });
-        }
-      }
-    }
-    setIsLoading(false);
-  }, [userId, authUser]);
+  const supabase = useSupabase();
+  const router = useRouter();
 
-  if (authLoading || isLoading || !authUser) { // Also wait for authUser from useRequireAuth
+  const [userProfile, setUserProfile] = useState<any | null>(null); // Use 'any' for now, define a type later
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchUserProfile() {
+      setIsLoading(true);
+      setError(null);
+      
+      const { data, error } = await supabase
+        .from('users') // Assuming your user profiles are in the 'users' table
+        .select('*') // Select all columns
+        .eq('id', userId) // Filter by the user ID from the URL
+        .single(); // Expecting a single result
+
+      if (error) {
+        setError(error.message);
+        setUserProfile(null);
+      } else {
+        setUserProfile(data);
+      }
+      setIsLoading(false);
+    }
+    fetchUserProfile();
+  }, [userId, supabase]); // Depend on userId and supabase client
+
+  if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
@@ -64,14 +58,18 @@ export default function UserProfilePage() {
       </div>
     );
   }
-  
-  // At this point, authUser is guaranteed to be non-null by useRequireAuth
-  // userProfile might be undefined if not found and not the authUser's own profile
-  if (!userProfile) {
-    // Check if the user is trying to view their own profile but it's not in placeholder-data
-    // This scenario is partially handled in useEffect for a basic display
-    // If it's another user's profile that is not found:
-     notFound(); // Or show a custom "profile not found" component
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-200px)] text-red-500">
+        <p>Error loading profile: {error}</p>
+      </div>
+    );
+  }
+
+  if (!userProfile) { // User profile not found in Supabase
+    // You could redirect to a 404 page or show a specific message
+    router.push('/404'); // Redirect to a 404 page
      return null;
   }
 
@@ -88,10 +86,12 @@ export default function UserProfilePage() {
             <h1 className="text-3xl md:text-4xl font-headline font-bold text-primary">{userProfile.name}</h1>
             <p className="text-lg text-muted-foreground mt-1">{userProfile.bio || 'No bio provided.'}</p>
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-muted-foreground mt-3">
-              <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {userProfile.email}</span>
-              <span className="flex items-center gap-1.5"><CalendarDays className="w-4 h-4" /> Joined {format(new Date(userProfile.joinedDate), 'MMMM yyyy')}</span>
+              {userProfile.email && <span className="flex items-center gap-1.5"><Mail className="w-4 h-4" /> {userProfile.email}</span>}
+              {/* Assuming 'created_at' from Supabase is the join date */}
+              {userProfile.created_at && <span className="flex items-center gap-1.5"><CalendarDays className="w-4 h-4" /> Joined {format(new Date(userProfile.created_at), 'MMMM yyyy')}</span>}
             </div>
           </div>
+          {/* Add Edit Profile button here if userId matches authUser.id */}
         </CardHeader>
       </Card>
 
@@ -115,8 +115,9 @@ export default function UserProfilePage() {
               <CardDescription>Courses {userProfile.name} has successfully completed.</CardDescription>
             </CardHeader>
             <CardContent>
-              {userProfile.completedCourses.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Placeholder data for completedCourses - replace with Supabase data */}
+              {userProfile.completed_courses && userProfile.completed_courses.length > 0 ? (
+                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {userProfile.completedCourses.map((course: Pick<Course, 'id' | 'title' | 'imageUrl' | 'category'>) => (
                     <Link key={course.id} href={`/courses/${course.id}`} className="block group">
                       <Card className="h-full overflow-hidden hover:shadow-md transition-shadow">
@@ -138,7 +139,7 @@ export default function UserProfilePage() {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No completed courses yet.</p>
+                 <p className="text-muted-foreground">No completed courses found.</p>
               )}
             </CardContent>
           </Card>
@@ -151,8 +152,9 @@ export default function UserProfilePage() {
               <CardDescription>Forum threads {userProfile.name} has participated in.</CardDescription>
             </CardHeader>
             <CardContent>
-              {userProfile.discussionsParticipated.length > 0 ? (
-                <ul className="space-y-3">
+              {/* Placeholder data for discussionsParticipated - replace with Supabase data */}
+              {userProfile.discussions && userProfile.discussions.length > 0 ? (
+                 <ul className="space-y-3">
                   {userProfile.discussionsParticipated.map((thread: Pick<UserForumThread, 'id' | 'title' | 'courseId'>) => {
                     const fullThreadDetails = forumThreads.find(ft => ft.id === thread.id);
                     const courseForThread = fullThreadDetails?.courseId ? allCourses.find(c => c.id === fullThreadDetails.courseId) : undefined;
@@ -180,7 +182,8 @@ export default function UserProfilePage() {
                   })}
                 </ul>
               ) : (
-                <p className="text-muted-foreground">No discussions participated in yet.</p>
+                 <p className="text-muted-foreground">No discussions found.</p>
+
               )}
             </CardContent>
           </Card>
@@ -193,8 +196,9 @@ export default function UserProfilePage() {
               <CardDescription>Communities {userProfile.name} is a part of.</CardDescription>
             </CardHeader>
             <CardContent>
-              {userProfile.joinedCommunities.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Placeholder data for joinedCommunities - replace with Supabase data */}
+              {userProfile.joined_communities && userProfile.joined_communities.length > 0 ? (
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {userProfile.joinedCommunities.map(community => (
                      <Card key={community.id} className="flex items-center gap-3 p-3 hover:shadow-md transition-shadow">
                       {community.imageUrl && <Image src={community.imageUrl} alt={community.name} width={40} height={40} className="rounded-full" data-ai-hint="community logo"/>}
@@ -203,7 +207,7 @@ export default function UserProfilePage() {
                   ))}
                 </div>
               ) : (
-                 <p className="text-muted-foreground">Not a member of any communities yet.</p>
+                 <p className="text-muted-foreground">No joined communities found.</p>
               )}
             </CardContent>
           </Card>

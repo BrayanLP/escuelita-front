@@ -1,15 +1,50 @@
+"use client"
 
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Users, Info, Calendar as CalendarIcon, MessageSquare, Clock, User as UserIcon } from 'lucide-react';
-import { getCommunityThreads } from '@/lib/placeholder-data';
-import type { ForumThread } from '@/lib/types';
+import { Users, Info, Calendar as CalendarIcon, MessageSquare, Clock, User as UserIcon, Loader2 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { NewCommunityThreadForm } from './components/NewCommunityThreadForm';
+import { useSupabase } from '@/contexts/SupabaseContext';
+import type { ForumThread } from '@/lib/types'; // Assuming you have a type definition for ForumThread
 
-export default async function CommunityPage() {
-  const communityThreads = getCommunityThreads();
+export default function CommunityPage() {
+  const supabase = useSupabase();
+  const [communityThreads, setCommunityThreads] = useState<ForumThread[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchCommunityThreads() {
+      const { data, error } = await supabase
+        .from('community_threads')
+        .select('*, author:users(name, avatar_url)') // Join with users table and select author's name and avatar
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching community threads:', error);
+        setError('Error al cargar las discusiones.');
+      } else {
+        // You might need to map or transform the data from Supabase to match your ForumThread type
+        setCommunityThreads(data as ForumThread[]);
+        // Map the data to match the ForumThread type expected by ForumPostCard
+        const formattedData = data.map(thread => ({
+          ...thread,
+          authorName: thread.author?.name || 'Unknown User', // Use author.name as authorName
+          userAvatarUrl: thread.author?.avatar_url || null, // Use author.avatar_url as userAvatarUrl
+          // Assuming your threads table has a 'postCount' or similar column,
+          // otherwise you might need to fetch this separately or count comments
+          postCount: thread.postCount || 0, 
+        }));
+        setCommunityThreads(formattedData as ForumThread[]);
+      }
+      setLoading(false);
+    }
+
+    fetchCommunityThreads();
+  }, [supabase]);
 
   return (
     <div className="space-y-8">
@@ -25,8 +60,18 @@ export default async function CommunityPage() {
       <section className="space-y-6">
         <h2 className="text-2xl font-headline font-semibold mt-10">Discusiones Activas</h2>
         {communityThreads.length > 0 ? (
+          loading ? (
+            <div className="flex justify-center items-center">
+              <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+              <p>Cargando discusiones...</p>
+            </div>
+          ) : error ? (
+            <div className="text-center text-red-500">
+              {error}
+            </div>
+          ) :
           communityThreads.map((thread: ForumThread) => (
-            <Card key={thread.id} className="hover:shadow-md transition-shadow">
+            <Card key={thread.id} className="hover:shadow-md transition-shadow rounded-lg">
               <CardHeader>
                 <CardTitle className="text-xl font-headline">
                   <Link href={`/community/threads/${thread.id}`} className="hover:text-primary">
@@ -34,7 +79,7 @@ export default async function CommunityPage() {
                   </Link>
                 </CardTitle>
                 <CardDescription className="text-xs flex flex-wrap gap-x-3 gap-y-1 items-center">
-                  <span className="flex items-center gap-1"><UserIcon className="w-3 h-3" /> Por {thread.authorName}</span>
+                  <span className="flex items-center gap-1"><UserIcon className="w-3 h-3" /> Por {thread.authorName || 'Unknown User'}</span>
                   <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Iniciado {formatDistanceToNow(new Date(thread.createdAt), { addSuffix: true })}</span>
                   <span className="flex items-center gap-1"><MessageSquare className="w-3 h-3" /> {thread.postCount} posts</span>
                 </CardDescription>
@@ -49,7 +94,7 @@ export default async function CommunityPage() {
             </Card>
           ))
         ) : (
-          <Card>
+          <Card className="rounded-lg">
             <CardContent className="pt-6">
               <p className="text-center text-muted-foreground">Aún no hay discusiones en la comunidad. ¡Sé el primero en iniciar una!</p>
             </CardContent>
@@ -62,7 +107,7 @@ export default async function CommunityPage() {
       <section>
         <h2 className="text-2xl font-headline font-semibold mb-6 text-center">Más de la Comunidad</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="shadow-md hover:shadow-lg transition-shadow">
+            <Card className="shadow-md hover:shadow-lg transition-shadow rounded-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline text-xl">
                 <Info className="w-6 h-6 text-primary" />
@@ -98,7 +143,7 @@ export default async function CommunityPage() {
             </CardContent>
             </Card>
 
-            <Card className="shadow-md hover:shadow-lg transition-shadow">
+            <Card className="shadow-md hover:shadow-lg transition-shadow rounded-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-headline text-xl">
                 <CalendarIcon className="w-6 h-6 text-primary" />

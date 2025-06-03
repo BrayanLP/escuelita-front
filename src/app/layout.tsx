@@ -4,7 +4,7 @@ import './globals.css';
 import { Navbar } from '@/app/components/Navbar';
 import { Footer } from '@/app/components/Footer';
 import { Toaster } from "@/components/ui/toaster";
-import { AuthProvider } from '@/contexts/AuthContext';
+import { SupabaseProvider } from '@/contexts/SupabaseContext';
 
 export const metadata: Metadata = {
   title: 'Escuelita - Online Learning Platform',
@@ -25,14 +25,14 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased flex flex-col min-h-screen">
-        <AuthProvider>
+        <SupabaseProvider>
           <Navbar />
           <main className="flex-grow container mx-auto px-4 py-8">
             {children}
           </main>
           <Footer />
           <Toaster />
-        </AuthProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );

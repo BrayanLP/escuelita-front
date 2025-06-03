@@ -1,18 +1,36 @@
 
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
-import { userProfiles } from '@/lib/placeholder-data';
-import type { UserProfileData } from '@/lib/types';
+import { useSupabase } from '@/contexts/SupabaseContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mail, Users as UsersIcon, CalendarDays } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import React, { useState } from 'react';
 
 
-export default async function MembersPage() {
-  const members = userProfiles; // In a real app, fetch this data
+export default function MembersPage() {
+  const { supabase } = useSupabase();
+  const [members, setMembers] = useState<any[]>([]); // Consider using a more specific type
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    async function fetchMembers() {
+      const { data, error } = await supabase.from('users').select('id, name, avatar_url, bio, email, created_at'); // Adjust columns as needed
+      if (error) {
+        setError(error.message);
+      } else {
+        setMembers(data || []);
+      }
+      setLoading(false);
+    }
+    fetchMembers();
+  }, [supabase]);
 
   return (
     <div className="space-y-8">
@@ -23,26 +41,30 @@ export default async function MembersPage() {
         </p>
       </section>
 
-      {members.length > 0 ? (
+      {loading && <p className="text-center">Cargando miembros...</p>}
+ {error && <p className="text-center text-red-500">Error al cargar miembros: {error}</p>}
+
+ {!loading && !error && 
+ members.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {members.map((member: UserProfileData) => (
+          {members.map((member) => (
             <Card key={member.id} className="flex flex-col overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg">
               <CardHeader className="items-center text-center p-6 bg-card border-b">
                 <Avatar className="h-28 w-28 mb-4 border-4 border-primary/50 shadow-sm">
-                  <AvatarImage src={member.avatarUrl} alt={member.name} data-ai-hint="person portrait"/>
-                  <AvatarFallback className="text-4xl bg-muted text-primary">{member.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  <AvatarImage src={member.avatar_url} alt={member.name} data-ai-hint="person portrait"/>
+                  <AvatarFallback className="text-4xl bg-muted text-primary">{member.name ? member.name.substring(0, 2).toUpperCase() : '?'}</AvatarFallback>
                 </Avatar>
                 <CardTitle className="text-2xl font-headline">
                   <Link href={`/profile/${member.id}`} className="hover:text-primary transition-colors">
-                    {member.name}
+                    {member.name || 'Usuario sin nombre'}
                   </Link>
                 </CardTitle>
                 {member.bio && <CardDescription className="text-sm text-muted-foreground line-clamp-3 mt-1 h-16">{member.bio}</CardDescription>}
               </CardHeader>
               <CardContent className="p-4 flex-grow">
                 <div className="text-sm text-muted-foreground space-y-2">
-                   <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-accent" /> {member.email}</p>
-                   <p className="flex items-center gap-2"><CalendarDays className="w-4 h-4 text-accent" /> Unido {formatDistanceToNow(new Date(member.joinedDate), { addSuffix: true, locale: es })}</p>
+                   <p className="flex items-center gap-2"><Mail className="w-4 h-4 text-accent" /> {member.email || 'No proporcionado'}</p>
+                   <p className="flex items-center gap-2"><CalendarDays className="w-4 h-4 text-accent" /> Unido {member.created_at ? formatDistanceToNow(new Date(member.created_at), { addSuffix: true, locale: es }) : 'Fecha no disponible'}</p>
                 </div>
               </CardContent>
               <CardFooter className="p-4 border-t">

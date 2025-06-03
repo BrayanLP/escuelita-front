@@ -8,8 +8,6 @@ import { Menu, LogOut, UserCircle, LogInIcon, UserPlus } from 'lucide-react';
 import { EscuelitaLogo } from './Icons';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-
 const baseNavLinks = [
   { href: '/', label: 'Cursos' },
   { href: '/community', label: 'Comunidad' },
@@ -19,19 +17,9 @@ const baseNavLinks = [
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, signOut: firebaseSignOut, loading } = useAuth();
-  const { toast } = useToast();
-  const router = useRouter();
-
-  const handleSignOut = async () => {
-    try {
-      await firebaseSignOut();
-      toast({ title: "Logged Out", description: "You have been successfully logged out." });
-      router.push('/auth/login');
-    } catch (error) {
-      toast({ title: "Logout Failed", description: "Could not log out. Please try again.", variant: "destructive" });
-    }
-  };
+  // Simular estado de usuario y carga sin Firebase
+  const user = null; // O un objeto de usuario si quieres simular un usuario logeado
+  const loading = false; // O true si quieres simular carga
 
   const dynamicNavLinks = user
     ? [
@@ -60,7 +48,7 @@ export function Navbar() {
               <Link href={link.href}>{link.label}</Link>
             </Button>
           ))}
-          {!loading && !user && (
+          {!loading && !user && ( // Mantener botones de login/signup si no hay usuario
             <>
               <Button variant="ghost" asChild className="text-sm text-foreground/70 hover:text-foreground hover:bg-accent/50">
                 <Link href="/auth/login"><LogInIcon className="mr-1.5 h-4 w-4" /> Login</Link>
@@ -69,14 +57,15 @@ export function Navbar() {
                 <Link href="/auth/signup"><UserPlus className="mr-1.5 h-4 w-4" /> Sign Up</Link>
               </Button>
             </>
-          )}
-          {!loading && user && (
+          )} 
+          {/* Eliminar el botón de Logout que usaba Firebase */}
+          {/* {!loading && user && (
             <Button variant="ghost" onClick={handleSignOut} className="text-sm text-foreground/70 hover:text-destructive hover:bg-destructive/10">
               <LogOut className="mr-1.5 h-4 w-4" /> Logout
             </Button>
           )}
-        </nav>
-
+          */}
+        </nav> 
         <div className="md:hidden">
           <Sheet>
             <SheetTrigger asChild>
@@ -125,13 +114,14 @@ export function Navbar() {
                       </SheetClose>
                     </div>
                   )}
-                  {!loading && user && (
+                  {/* Eliminar el botón de Logout en el menú móvil */}
+                  {/* {!loading && user && (
                      <SheetClose asChild>
                         <Button variant="outline" onClick={handleSignOut} className="w-full">
                           <LogOut className="mr-2" /> Logout
                         </Button>
                       </SheetClose>
-                  )}
+                  )}*/}
                 </div>
               </div>
             </SheetContent>

@@ -1,10 +1,12 @@
 
 'use client';
 import * as React from 'react';
+import { useEffect, useState } from 'react';
 import { Calendar as CalendarIconLucide } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useSupabase } from '@/contexts/SupabaseContext';
 
 // Placeholder for event data structure
 interface CommunityEvent {
@@ -14,29 +16,46 @@ interface CommunityEvent {
   type: 'Taller' | 'Charla' | 'Reunión';
 }
 
-// Sample events (replace with actual data fetching)
-const sampleEvents: CommunityEvent[] = [
-  { date: new Date(new Date().setDate(new Date().getDate() + 3)), title: 'Taller de Next.js Avanzado', description: 'Profundiza en Server Components y Actions.', type: 'Taller' },
-  { date: new Date(new Date().setDate(new Date().getDate() + 7)), title: 'Charla: IA en el Desarrollo Web', description: 'Cómo la IA está cambiando el panorama.', type: 'Charla' },
-  { date: new Date(new Date().setDate(new Date().getDate() + 7)), title: 'Reunión Mensual Comunidad', description: 'Puesta al día y networking.', type: 'Reunión' },
-  { date: new Date(new Date().setDate(new Date().getDate() + 15)), title: 'Taller de Diseño UI/UX', description: 'Principios básicos para interfaces atractivas.', type: 'Taller' },
-];
-
-
 export default function CalendarPage() {
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
-  const [eventsForSelectedDate, setEventsForSelectedDate] = React.useState<CommunityEvent[]>([]);
+  const supabase = useSupabase();
+  const [events, setEvents] = useState<CommunityEvent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [eventsForSelectedDate, setEventsForSelectedDate] = useState<CommunityEvent[]>([]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setLoading(true);
+      const { data, error } = await supabase.from('calendar_events').select('*');
+      if (error) {
+        setError(error.message);
+        setEvents([]);
+      } else {
+        // Map Supabase data to CommunityEvent interface
+        const formattedEvents: CommunityEvent[] = data.map((event: any) => ({
+          date: new Date(event.start_time), // Assuming start_time is a valid date string/timestamp
+          title: event.title,
+          description: event.description,
+          type: event.type, // Assuming 'type' column exists and matches CommunityEvent types
+        }));
+        setEvents(formattedEvents);
+      }
+      setLoading(false);
+    };
+    fetchEvents();
+  }, [supabase]); // Refetch when supabase client changes (unlikely but good practice)
+
+  useEffect(() => {
     if (selectedDate) {
-      const filteredEvents = sampleEvents.filter(event => 
+      const filteredEvents = events.filter(event =>
         event.date.toDateString() === selectedDate.toDateString()
       );
       setEventsForSelectedDate(filteredEvents);
     } else {
       setEventsForSelectedDate([]);
     }
-  }, [selectedDate]);
+  }, [selectedDate, events]); // Update filtered events when selected date or all events change
 
   return (
     <div className="space-y-8">
@@ -63,7 +82,7 @@ export default function CalendarPage() {
                     onSelect={setSelectedDate}
                     className="rounded-md"
                     modifiers={{
-                        hasEvent: sampleEvents.map(event => event.date) 
+                        hasEvent: events.map(event => event.date)
                     }}
                     modifiersClassNames={{
                         hasEvent: 'bg-primary/20 text-primary rounded-full'
@@ -84,7 +103,16 @@ export default function CalendarPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {eventsForSelectedDate.length > 0 ? (
+              {loading && (
+                <p className="text-muted-foreground text-center py-10">Cargando eventos...</p>
+              )}
+              {error && (
+                <p className="text-destructive text-center py-10">Error al cargar eventos: {error}</p>
+              )}
+              {!loading && !error && eventsForSelectedDate.length === 0 && (
+                 <p className="text-muted-foreground text-center py-10">{selectedDate ? 'No hay eventos programados para esta fecha.' : 'Selecciona una fecha del calendario para ver los eventos.'}</p>
+              )}
+              {eventsForSelectedDate.length > 0 && (
                 eventsForSelectedDate.map((event, index) => (
                   <Card key={index} className="bg-background hover:shadow-md transition-shadow">
                     <CardHeader className="pb-3">
@@ -101,11 +129,7 @@ export default function CalendarPage() {
                     </CardContent>
                   </Card>
                 ))
-              ) : (
-                <p className="text-muted-foreground text-center py-10">
-                  {selectedDate ? 'No hay eventos programados para esta fecha.' : 'Selecciona una fecha del calendario para ver los eventos.'}
-                </p>
-              )}
+              ) }
             </CardContent>
           </Card>
         </div>

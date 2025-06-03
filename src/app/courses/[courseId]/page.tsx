@@ -2,9 +2,8 @@
 'use client';
 
 import Image from 'next/image';
-import { notFound } from 'next/navigation';
-import { useEffect, useState, useMemo } from 'react';
-import { getCourseById, courses as allCourses } from '@/lib/placeholder-data';
+import { useParams, notFound } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import type { Course, Lesson } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,32 +12,53 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { CheckCircle, Download, PlayCircle, ListVideo, ChevronLeft, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { useSupabase } from '@/contexts/SupabaseContext';
 
 // generateStaticParams was removed as it cannot be used with 'use client'
 
-export default function CourseViewerPage({ params }: { params: { courseId: string } }) {
+export default function CourseViewerPage() {
   const [course, setCourse] = useState<Course | undefined>(undefined);
   const [selectedLesson, setSelectedLesson] = useState<Lesson | undefined>(undefined);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Placeholder for progress - in a real app, this would come from user data
-  const [completedLessonsCount, setCompletedLessonsCount] = useState(0); 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const { courseId } = useParams();
+  const supabase = useSupabase();
 
   useEffect(() => {
-    const fetchedCourse = getCourseById(params.courseId);
-    if (fetchedCourse) {
-      setCourse(fetchedCourse);
-      if (fetchedCourse.lessons.length > 0) {
-        setSelectedLesson(fetchedCourse.lessons[0]);
+    async function fetchCourse() {
+      if (!courseId || typeof courseId !== 'string') {
+        setError("Invalid course ID");
+        setLoading(false);
+        return;
       }
-      // Simulate fetching completed lessons for progress
-      // For example, if the first lesson is considered "completed" for demo
-      // if (fetchedCourse.lessons.length > 0) setCompletedLessonsCount(1);
-    }
-    setIsLoading(false);
-  }, [params.courseId]);
+      const { data, error } = await supabase
+        .from('courses')
+        .select('*, lessons(*)') // Assuming lessons are related and fetched with the course
+        .eq('id', courseId)
+        .single();
 
-  const progressPercentage = useMemo(() => {
+      if (error) {
+        setError(error.message);
+      } else if (data) {
+        setCourse(data as Course); // Type assertion assuming Supabase data matches Course type
+        if (data.lessons && data.lessons.length > 0) {
+          setSelectedLesson(data.lessons[0] as Lesson); // Type assertion
+        }
+      } else {
+        // No course found with that ID
+        notFound();
+      }
+      setLoading(false);
+    }
+
+    if (supabase) {
+ fetchCourse();
+    }
+  }, [courseId, supabase]);
+
+  // Placeholder for progress - in a real app, this would come from user data
+  const progressPercentage = (() => {
     if (!course || course.lessons.length === 0) return 0;
     // This is a mock progress. In a real app, track actual completed lessons.
     // For demo, let's assume progress is based on the index of the selected lesson.
@@ -47,13 +67,20 @@ export default function CourseViewerPage({ params }: { params: { courseId: strin
     if (currentIndex !== -1) return ((currentIndex +1) / course.lessons.length) * 100;
     return 0;
 
-  }, [course, selectedLesson, completedLessonsCount]);
+  })();
 
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-12rem)]">
         <p className="text-xl text-muted-foreground">Loading course...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-[calc(100vh-12rem)]">
+        <p className="text-xl text-destructive">Error loading course: {error}</p>
       </div>
     );
   }

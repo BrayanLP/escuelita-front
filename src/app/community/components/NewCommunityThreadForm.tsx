@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createCommunityThread } from '@/lib/placeholder-data';
+import { useSupabase } from '@/contexts/SupabaseContext'; // Import useSupabase
 
 export function NewCommunityThreadForm() {
   const [title, setTitle] = useState('');
@@ -17,10 +17,8 @@ export function NewCommunityThreadForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-
-  // In a real app, this would be the authenticated user's ID
-  const placeholderUserId = 'user1'; 
-
+  const { supabase } = useSupabase(); // Get the Supabase client
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
@@ -33,12 +31,29 @@ export function NewCommunityThreadForm() {
     }
 
     setIsSubmitting(true);
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const newThread = createCommunityThread(title, content, placeholderUserId);
 
-      if (newThread) {
+    try {
+      // Get the authenticated user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+      if (userError || !user) {
+        throw new Error(userError?.message || "User not authenticated.");
+      }
+
+      // Insert the new thread into the 'community_threads' table
+      const { data, error } = await supabase
+        .from('community_threads')
+        .insert([
+          { title, content, author_id: user.id },
+        ])
+        .select() // Select the inserted row
+        .single(); // Expect a single row in return
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
         toast({
           title: "Success!",
           description: "New community thread created.",
@@ -46,7 +61,7 @@ export function NewCommunityThreadForm() {
         setTitle('');
         setContent('');
         router.refresh(); // Refresh server component data
-        router.push(`/community/threads/${newThread.id}`);
+        router.push(`/community/threads/${data.id}`);
       } else {
         throw new Error("Failed to create thread.");
       }

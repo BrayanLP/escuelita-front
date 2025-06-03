@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,19 +11,32 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { UserPlus } from 'lucide-react';
+import { useSupabase } from '@/contexts/SupabaseContext';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
-  const { signUp, user, loading: authLoading } = useAuth();
+  // const { signUp, user, loading: authLoading } = useAuth(); // Removed old auth hook
+  const { supabase } = useSupabase(); // Use Supabase hook
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Supabase auth state management
+  const [user, setUser] = useState(null);
+  const [isLoadingSession, setIsLoadingSession] = useState(true);
+
   useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/'); // Redirect if already logged in
+    if (!supabase) return;
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setIsLoadingSession(false);
+    });
+
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
     }
   }, [user, authLoading, router]);
 
@@ -38,8 +51,28 @@ export default function SignupPage() {
         return;
     }
     setIsSubmitting(true);
+
+    if (!supabase) {
+      console.error("Supabase client not available");
+      setIsSubmitting(false);
+      toast({
+        title: "Signup Failed",
+        description: "Supabase client is not initialized.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
-      await signUp(email, password, displayName);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            display_name: displayName, // Store display name in user metadata
+          },
+        },
+      });
       toast({ title: "Success", description: "Account created successfully! Please log in." });
       router.push('/auth/login'); // Redirect to login page after signup
     } catch (error: any) {
@@ -53,8 +86,9 @@ export default function SignupPage() {
       setIsSubmitting(false);
     }
   };
-  
-  if (authLoading || user) {
+
+  // Show loading state while checking session or submitting, or if user is logged in
+  if (isLoadingSession || isSubmitting || user) {
      return <div className="flex justify-center items-center min-h-screen"><p>Loading...</p></div>;
   }
 

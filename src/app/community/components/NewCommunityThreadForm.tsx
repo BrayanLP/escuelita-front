@@ -9,13 +9,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { createThread } from '@/lib/placeholder-data'; // Updated import
+import { createCommunityThread } from '@/lib/placeholder-data';
 
-interface NewThreadFormProps {
-  courseId: string;
-}
-
-export function NewThreadForm({ courseId }: NewThreadFormProps) {
+export function NewCommunityThreadForm() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -40,18 +36,17 @@ export function NewThreadForm({ courseId }: NewThreadFormProps) {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      // Updated function call
-      const newThread = createThread(title, content, placeholderUserId, courseId);
+      const newThread = createCommunityThread(title, content, placeholderUserId);
 
       if (newThread) {
         toast({
           title: "Success!",
-          description: "New thread created.",
+          description: "New community thread created.",
         });
         setTitle('');
         setContent('');
         router.refresh(); // Refresh server component data
-        router.push(`/courses/${courseId}/forum/${newThread.id}`);
+        router.push(`/community/threads/${newThread.id}`);
       } else {
         throw new Error("Failed to create thread.");
       }
@@ -67,23 +62,23 @@ export function NewThreadForm({ courseId }: NewThreadFormProps) {
   };
 
   return (
-    <Card>
+    <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 font-headline text-2xl">
           <PlusCircle className="w-6 h-6 text-primary" />
           Start a New Discussion
         </CardTitle>
-        <CardDescription>Share your thoughts or ask a question about this course.</CardDescription>
+        <CardDescription>Share your thoughts or ask a question to the community.</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="threadTitle" className="font-semibold">Thread Title</Label>
+            <Label htmlFor="threadTitle" className="font-semibold">Discussion Title</Label>
             <Input
               id="threadTitle"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g., Question about Module 2"
+              placeholder="e.g., What are your favorite coding tools?"
               required
               className="mt-1"
             />
@@ -103,7 +98,7 @@ export function NewThreadForm({ courseId }: NewThreadFormProps) {
         </CardContent>
         <CardFooter>
           <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
-            {isSubmitting ? 'Submitting...' : 'Create Thread'}
+            {isSubmitting ? 'Submitting...' : 'Create Discussion'}
           </Button>
         </CardFooter>
       </form>

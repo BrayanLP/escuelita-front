@@ -65,7 +65,7 @@ export interface ForumPost {
 
 export interface ForumThread {
   id: string;
-  courseId: string;
+  courseId?: string; // Made optional for community threads
   title: string;
   authorId: string;
   authorName: string;

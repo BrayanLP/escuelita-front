@@ -98,7 +98,8 @@ export const userProfiles: UserProfileData[] = [
       { id: 'comm1', name: 'Web Dev Beginners', imageUrl: 'https://placehold.co/50x50.png' }
     ],
     discussionsParticipated: [
-      { id: 'thread1-course1', title: 'Trouble with CSS Flexbox', courseId: 'course1' }
+      { id: 'thread1-course1', title: 'Trouble with CSS Flexbox', courseId: 'course1' },
+      { id: 'community-thread1', title: 'General Chat about Web Development Trends'}
     ]
   },
   {
@@ -114,20 +115,28 @@ export const userProfiles: UserProfileData[] = [
     ],
     joinedCommunities: [],
     discussionsParticipated: [
-      { id: 'thread1-course2', title: 'Understanding JavaScript Closures', courseId: 'course2' }
+      { id: 'thread1-course2', title: 'Understanding JavaScript Closures', courseId: 'course2' },
+      { id: 'community-thread2', title: 'Favorite Frontend Frameworks in 2024?'}
     ]
   }
 ];
 
 const forumPosts: ForumPost[] = [
-    { id: 'post1-thread1', userId: 'user1', userName: 'Alice Wonderland', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'I am having some trouble understanding how flexbox works for responsive layouts. Can anyone help?', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
-    { id: 'post2-thread1', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Flexbox can be tricky! What specific part are you struggling with? Maybe share some code?', createdAt: new Date(Date.now() - 86400000 * 1.5).toISOString() },
-    { id: 'post3-thread1', userId: 'user1', userName: 'Alice Wonderland', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Thanks Bob! It\'s mostly about `justify-content` and `align-items` when the container resizes.', createdAt: new Date(Date.now() - 86400000 * 1).toISOString() },
-    { id: 'post1-thread2', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Closures in JavaScript seem like magic. How do they really work under the hood?', createdAt: new Date(Date.now() - 86400000 * 4).toISOString() },
-    { id: 'post2-thread2', userId: 'inst2', userName: 'Prof. Alan Turing', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'A closure gives you access to an outer function’s scope from an inner function. Think of it as a function bundling its lexical environment.', createdAt: new Date(Date.now() - 86400000 * 3.5).toISOString() },
+    // Course Thread Posts
+    { id: 'post1-thread1-course1', userId: 'user1', userName: 'Alice Wonderland', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'I am having some trouble understanding how flexbox works for responsive layouts. Can anyone help?', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
+    { id: 'post2-thread1-course1', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Flexbox can be tricky! What specific part are you struggling with? Maybe share some code?', createdAt: new Date(Date.now() - 86400000 * 1.5).toISOString() },
+    { id: 'post3-thread1-course1', userId: 'user1', userName: 'Alice Wonderland', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Thanks Bob! It\'s mostly about `justify-content` and `align-items` when the container resizes.', createdAt: new Date(Date.now() - 86400000 * 1).toISOString() },
+    { id: 'post1-thread1-course2', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Closures in JavaScript seem like magic. How do they really work under the hood?', createdAt: new Date(Date.now() - 86400000 * 4).toISOString() },
+    { id: 'post2-thread1-course2', userId: 'inst2', userName: 'Prof. Alan Turing', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'A closure gives you access to an outer function’s scope from an inner function. Think of it as a function bundling its lexical environment.', createdAt: new Date(Date.now() - 86400000 * 3.5).toISOString() },
+    
+    // Community Thread Posts
+    { id: 'post1-community-thread1', userId: 'user1', userName: 'Alice Wonderland', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'Hey everyone! What are some of the most exciting web development trends you are seeing this year?', createdAt: new Date(Date.now() - 86400000 * 1).toISOString() },
+    { id: 'post2-community-thread1', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'I think AI integration into web apps is huge. Also, server components are changing how we build things.', createdAt: new Date(Date.now() - 86400000 * 0.5).toISOString() },
+    { id: 'post1-community-thread2', userId: 'user2', userName: 'Bob The Builder', userAvatarUrl: 'https://placehold.co/40x40.png', content: 'What are your go-to frontend frameworks these days? Still React, or are Svelte/Vue gaining more ground for you?', createdAt: new Date(Date.now() - 86400000 * 2).toISOString() },
 ];
 
-export const forumThreads: ForumThread[] = [
+export let forumThreads: ForumThread[] = [
+  // Course-specific threads
   { 
     id: 'thread1-course1', 
     courseId: 'course1', 
@@ -148,7 +157,7 @@ export const forumThreads: ForumThread[] = [
     createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), 
     lastActivityAt: new Date(Date.now() - 86400000 * 4.5).toISOString(), 
     postCount: 1,
-    posts: [{ id: 'post1-thread2c1', userId: 'user2', userName: 'Bob The Builder', content: 'Looking for websites or platforms to practice JS problems.', createdAt: new Date(Date.now() - 86400000 * 5).toISOString() }]
+    posts: [{ id: 'post1-thread2c1', userId: 'user2', userName: 'Bob The Builder', content: 'Looking for websites or platforms to practice JS problems.', createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), userAvatarUrl: 'https://placehold.co/40x40.png' }]
   },
   { 
     id: 'thread1-course2', 
@@ -161,10 +170,32 @@ export const forumThreads: ForumThread[] = [
     postCount: 2,
     posts: [forumPosts[3], forumPosts[4]]
   },
+  // Community threads (no courseId)
+  {
+    id: 'community-thread1',
+    title: 'General Chat about Web Development Trends',
+    authorId: 'user1',
+    authorName: 'Alice Wonderland',
+    createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+    lastActivityAt: new Date(Date.now() - 86400000 * 0.5).toISOString(),
+    postCount: 2,
+    posts: [forumPosts[5], forumPosts[6]]
+  },
+  {
+    id: 'community-thread2',
+    title: 'Favorite Frontend Frameworks in 2024?',
+    authorId: 'user2',
+    authorName: 'Bob The Builder',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    lastActivityAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    postCount: 1,
+    posts: [forumPosts[7]]
+  }
 ];
 
 export const getCourseById = (id: string): Course | undefined => courses.find(c => c.id === id);
 export const getThreadsByCourseId = (courseId: string): ForumThread[] => forumThreads.filter(t => t.courseId === courseId);
+export const getCommunityThreads = (): ForumThread[] => forumThreads.filter(t => !t.courseId);
 export const getThreadById = (id: string): ForumThread | undefined => forumThreads.find(t => t.id === id);
 export const getUserProfileById = (id: string): UserProfileData | undefined => userProfiles.find(u => u.id === id);
 
@@ -180,40 +211,49 @@ export const addPostToThread = (threadId: string, postContent: string, userId: s
       content: postContent,
       createdAt: new Date().toISOString(),
     };
-    thread.posts.push(newPost);
+    thread.posts.push(newPost); // Mutates the original array in placeholder data
     thread.postCount = thread.posts.length;
     thread.lastActivityAt = new Date().toISOString();
+    // Update the global forumThreads array if you need to persist changes across page loads (for mock data)
+    // forumThreads = forumThreads.map(t => t.id === threadId ? thread : t);
     return newPost;
   }
   return undefined;
 };
 
-export const addThreadToCourse = (courseId: string, title: string, firstPostContent: string, userId: string): ForumThread | undefined => {
-  const course = getCourseById(courseId);
+// Renamed from addThreadToCourse, courseId is now optional
+export const createThread = (title: string, firstPostContent: string, userId: string, courseId?: string): ForumThread | undefined => {
   const user = getUserProfileById(userId);
-  if (course && user) {
-    const newThreadId = `thread${Date.now()}-${courseId}`;
-    const firstPost: ForumPost = {
-      id: `post${Date.now()}-${newThreadId}`,
-      userId: user.id,
-      userName: user.name,
-      userAvatarUrl: user.avatarUrl,
-      content: firstPostContent,
-      createdAt: new Date().toISOString(),
-    };
-    const newThread: ForumThread = {
-      id: newThreadId,
-      courseId,
-      title,
-      authorId: user.id,
-      authorName: user.name,
-      createdAt: new Date().toISOString(),
-      lastActivityAt: new Date().toISOString(),
-      postCount: 1,
-      posts: [firstPost],
-    };
-    forumThreads.push(newThread);
-    return newThread;
+  if (!user) return undefined;
+  if (courseId) {
+      const course = getCourseById(courseId);
+      if (!course) return undefined; // Course must exist if courseId is provided
   }
-  return undefined;
+
+  const newThreadId = `thread${Date.now()}${courseId ? `-${courseId}` : '-community'}`;
+  const firstPost: ForumPost = {
+    id: `post${Date.now()}-${newThreadId}`,
+    userId: user.id,
+    userName: user.name,
+    userAvatarUrl: user.avatarUrl,
+    content: firstPostContent,
+    createdAt: new Date().toISOString(),
+  };
+  const newThread: ForumThread = {
+    id: newThreadId,
+    courseId: courseId,
+    title,
+    authorId: user.id,
+    authorName: user.name,
+    createdAt: new Date().toISOString(),
+    lastActivityAt: new Date().toISOString(),
+    postCount: 1,
+    posts: [firstPost],
+  };
+  forumThreads.push(newThread); // Mutates placeholder data
+  return newThread;
+};
+
+export const createCommunityThread = (title: string, firstPostContent: string, userId: string): ForumThread | undefined => {
+    return createThread(title, firstPostContent, userId, undefined);
 };

@@ -101,14 +101,24 @@ export default async function UserProfilePage({ params }: { params: { userId: st
               {user.discussionsParticipated.length > 0 ? (
                 <ul className="space-y-3">
                   {user.discussionsParticipated.map((thread: Pick<UserForumThread, 'id' | 'title' | 'courseId'>) => {
-                    const courseForThread = allCourses.find(c => c.id === thread.courseId);
+                    const fullThreadDetails = forumThreads.find(ft => ft.id === thread.id); // Get full thread for courseId check
+                    const courseForThread = fullThreadDetails?.courseId ? allCourses.find(c => c.id === fullThreadDetails.courseId) : undefined;
+                    const linkHref = fullThreadDetails?.courseId 
+                      ? `/courses/${fullThreadDetails.courseId}/forum/${thread.id}` 
+                      : `/community/threads/${thread.id}`;
+                    
                     return (
                       <li key={thread.id} className="p-3 border rounded-lg hover:bg-muted/50 transition-colors">
-                        <Link href={`/courses/${thread.courseId}/forum/${thread.id}`} className="block">
+                        <Link href={linkHref} className="block">
                           <h3 className="font-semibold hover:text-primary transition-colors">{thread.title}</h3>
                           {courseForThread && (
                             <p className="text-sm text-muted-foreground">
                               In course: <span className="font-medium text-accent">{courseForThread.title}</span>
+                            </p>
+                          )}
+                          {!fullThreadDetails?.courseId && (
+                             <p className="text-sm text-muted-foreground">
+                              In: <span className="font-medium text-accent">Community Forum</span>
                             </p>
                           )}
                         </Link>

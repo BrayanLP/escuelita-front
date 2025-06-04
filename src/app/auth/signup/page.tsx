@@ -1,153 +1,174 @@
+"use client";
 
-'use client';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { supabase } from "@/lib/supabase/client";
+import { toast } from "sonner";
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useRouter, redirect } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useToast } from '@/hooks/use-toast';
-import { UserPlus } from 'lucide-react';
-import { useSupabase } from '@/contexts/SupabaseContext';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
+import Link from "next/link";
 
-export default function SignupPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [displayName, setDisplayName] = useState('');
-  // const { signUp, user, loading: authLoading } = useAuth(); // Removed old auth hook
-  const { supabase } = useSupabase(); // Use Supabase hook
+const formSchema = z
+  .object({
+    full_name: z.string().min(2, "Mínimo 2 caracteres"),
+    email: z.string().email("Correo inválido"),
+    password: z.string().min(6, "Mínimo 6 caracteres"),
+    confirm: z.string(),
+  })
+  .refine((data) => data.password === data.confirm, {
+    message: "Las contraseñas no coinciden",
+    path: ["confirm"],
+  });
+
+type FormData = z.infer<typeof formSchema>;
+
+export default function SignUpPage() {
   const router = useRouter();
-  const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Supabase auth state management
-  const [user, setUser] = useState(null);
-  const [isLoadingSession, setIsLoadingSession] = useState(true);
+  const form = useForm<FormData>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      full_name: "",
+      email: "",
+      password: "",
+      confirm: "",
+    },
+  });
 
-  useEffect(() => {
-    if (!supabase) return;
+  const onSubmit = async (values: FormData) => {
+    setIsLoading(true);
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setIsLoadingSession(false);
+    const { data, error } = await supabase.auth.signUp({
+      email: values.email,
+      password: values.password,
+      options: {
+        data: {
+          full_name: values.full_name,
+        },
+      },
     });
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    }
-  }, [user, authLoading, router]);
+    if (error) {
+      toast.error("Error al registrarse", { description: error.message });
+    } else {
+      // opcional: insertar perfil inmediatamente si no requieres confirmación
+      if (data.user?.id) {
+        await supabase.from("profiles").insert({
+          id: data.user.id,
+          email: data.user.email,
+          full_name: values.full_name,
+        });
+      }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (password.length < 6) {
-        toast({ title: "Signup Failed", description: "Password must be at least 6 characters long.", variant: "destructive"});
-        return;
-    }
-    if (!displayName.trim()) {
-        toast({ title: "Signup Failed", description: "Please enter your name.", variant: "destructive"});
-        return;
-    }
-    setIsSubmitting(true);
-
-    if (!supabase) {
-      console.error("Supabase client not available");
-      setIsSubmitting(false);
-      toast({
-        title: "Signup Failed",
-        description: "Supabase client is not initialized.",
-        variant: "destructive"
+      toast.success("Registro exitoso", {
+        description: "Revisa tu correo para confirmar tu cuenta.",
       });
-      return;
+
+      router.push(`/verify-email?email=${values.email}`);
     }
 
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            display_name: displayName, // Store display name in user metadata
-          },
-        },
-      });
-      toast({ title: "Success", description: "Account created successfully! Please log in." });
-      router.push('/auth/login'); // Redirect to login page after signup
-    } catch (error: any) {
-      console.error("Signup error", error);
-      toast({ 
-        title: "Signup Failed", 
-        description: error.message || "Could not create account.",
-        variant: "destructive" 
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    setIsLoading(false);
   };
 
-  // Show loading state while checking session or submitting, or if user is logged in
-  if (isLoadingSession || isSubmitting || user) {
-     return <div className="flex justify-center items-center min-h-screen"><p>Loading...</p></div>;
-  }
-
   return (
-    <div className="flex justify-center items-center min-h-[calc(100vh-200px)] py-12">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center">
-          <UserPlus className="mx-auto h-12 w-12 text-primary mb-2" />
-          <CardTitle className="text-3xl font-headline">Create an Account</CardTitle>
-          <CardDescription>Join Escuelita and start learning today.</CardDescription>
+    <div className="flex items-center justify-center min-h-svh p-6">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader>
+          <CardTitle className="text-2xl text-center">Crear cuenta</CardTitle>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-             <div className="space-y-2">
-              <Label htmlFor="displayName">Full Name</Label>
-              <Input
-                id="displayName"
-                type="text"
-                placeholder="Your Name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                required
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Nombre completo</Label>
+                    <FormControl>
+                      <Input placeholder="Ej. Juan Pérez" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Correo electrónico</Label>
+                    <FormControl>
+                      <Input
+                        type="email"
+                        placeholder="correo@ejemplo.com"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="•••••••• (min. 6 characters)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Contraseña</Label>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-4">
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating Account...' : 'Sign Up'}
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              Already have an account?{' '}
-              <Button variant="link" asChild className="p-0 h-auto text-accent">
-                <Link href="/auth/login">Sign In</Link>
+              <FormField
+                control={form.control}
+                name="confirm"
+                render={({ field }) => (
+                  <FormItem>
+                    <Label>Confirmar contraseña</Label>
+                    <FormControl>
+                      <Input type="password" placeholder="••••••" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Registrando...
+                  </div>
+                ) : (
+                  "Registrarse"
+                )}
               </Button>
-            </p>
-          </CardFooter>
-        </form>
+            </form>
+          </Form>
+          <div className="mt-4 text-sm text-center">
+            ¿Ya tienes cuenta?{" "}
+            <Link href="/login" className="text-primary hover:underline">
+              Inicia sesión
+            </Link>
+          </div>
+        </CardContent>
       </Card>
     </div>
   );

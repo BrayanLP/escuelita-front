@@ -71,9 +71,7 @@ npm run lint        # lint de código
 
 ## 📬 Contacto
 
-Únete a nuestro Discord (enlace privado) o contáctanos por correo.
-
----
+## Abre este enlace para unirte a mi grupo de WhatsApp: https://chat.whatsapp.com/FfFyPybtybuLbutHcp2y7Z
 
 ## 🤝 Contribuir
 

@@ -1,11 +1,10 @@
+"use client";
 
-'use client';
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-provider";
 
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/contexts/AuthContext';
-
-export function useRequireAuth(redirectTo = '/auth/login') {
+export function useRequireAuth(redirectTo = "/auth/login") {
   const { user, loading } = useAuth();
   const router = useRouter();
 

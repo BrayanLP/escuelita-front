@@ -1,24 +1,31 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { PlusCircle } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useSupabase } from '@/contexts/SupabaseContext'; // Import useSupabase
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { PlusCircle } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useSupabase } from "@/context/SupabaseContext"; // Import useSupabase
 
 export function NewCommunityThreadForm() {
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { supabase } = useSupabase(); // Get the Supabase client
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
@@ -34,7 +41,10 @@ export function NewCommunityThreadForm() {
 
     try {
       // Get the authenticated user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
 
       if (userError || !user) {
         throw new Error(userError?.message || "User not authenticated.");
@@ -42,10 +52,8 @@ export function NewCommunityThreadForm() {
 
       // Insert the new thread into the 'community_threads' table
       const { data, error } = await supabase
-        .from('community_threads')
-        .insert([
-          { title, content, author_id: user.id },
-        ])
+        .from("community_threads")
+        .insert([{ title, content, author_id: user.id }])
         .select() // Select the inserted row
         .single(); // Expect a single row in return
 
@@ -58,8 +66,8 @@ export function NewCommunityThreadForm() {
           title: "Success!",
           description: "New community thread created.",
         });
-        setTitle('');
-        setContent('');
+        setTitle("");
+        setContent("");
         router.refresh(); // Refresh server component data
         router.push(`/community/threads/${data.id}`);
       } else {
@@ -68,7 +76,9 @@ export function NewCommunityThreadForm() {
     } catch (error) {
       toast({
         title: "Error",
-        description: (error as Error).message || "Could not create thread. Please try again.",
+        description:
+          (error as Error).message ||
+          "Could not create thread. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -83,12 +93,16 @@ export function NewCommunityThreadForm() {
           <PlusCircle className="w-6 h-6 text-primary" />
           Start a New Discussion
         </CardTitle>
-        <CardDescription>Share your thoughts or ask a question to the community.</CardDescription>
+        <CardDescription>
+          Share your thoughts or ask a question to the community.
+        </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="threadTitle" className="font-semibold">Discussion Title</Label>
+            <Label htmlFor="threadTitle" className="font-semibold">
+              Discussion Title
+            </Label>
             <Input
               id="threadTitle"
               value={title}
@@ -99,7 +113,9 @@ export function NewCommunityThreadForm() {
             />
           </div>
           <div>
-            <Label htmlFor="threadContent" className="font-semibold">Your Message</Label>
+            <Label htmlFor="threadContent" className="font-semibold">
+              Your Message
+            </Label>
             <Textarea
               id="threadContent"
               value={content}
@@ -112,8 +128,12 @@ export function NewCommunityThreadForm() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button type="submit" disabled={isSubmitting} className="bg-primary hover:bg-primary/90">
-            {isSubmitting ? 'Submitting...' : 'Create Discussion'}
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="bg-primary hover:bg-primary/90"
+          >
+            {isSubmitting ? "Submitting..." : "Create Discussion"}
           </Button>
         </CardFooter>
       </form>

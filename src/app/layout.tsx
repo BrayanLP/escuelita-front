@@ -38,7 +38,7 @@ export default function RootLayout({
         <SupabaseProvider>
           <AuthProvider>
             {/* <Navbar /> */}
-            <main className="">{children}</main>
+            <main className="flex-auto h-full">{children}</main>
             <Footer />
             <Toaster />
           </AuthProvider>

@@ -1,14 +1,12 @@
-"use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase/client";
 import Link from "next/link";
-import Image from "next/image";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { SearchCommunitiesByCategory } from "./components/SearchCommunitiesByCategory";
+import CommunityCard from "./components/CommunityCard";
+import { Suspense, use } from "react";
+import LoadingCard from "./components/LoadingCard";
+import { SearchInput } from "./components/SearchInput";
 
-interface Community {
+export interface Community {
   id: string;
   name: string;
   slug: string;
@@ -34,49 +32,20 @@ const categories = [
   // "Relationships",
 ];
 
-export default function DiscoverPage() {
-  const [communities, setCommunities] = useState<Community[]>([]);
-  const [filtered, setFiltered] = useState<Community[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState("All");
-  const [search, setSearch] = useState("");
+interface Props {
+  searchParams: Promise<{
+    category?: string;
+    search?: string;
+  }>;
+}
 
-  useEffect(() => {
-    fetchCommunities();
-  }, []);
-
-  const fetchCommunities = async () => {
-    const { data } = await supabase
-      .from("communities")
-      .select("*")
-      .eq("is_public", true);
-
-    setCommunities(data || []);
-    setFiltered(data || []);
-  };
-
-  useEffect(() => {
-    let list = [...communities];
-
-    if (selectedCategory !== "All") {
-      list = list.filter((c) => c.category === selectedCategory);
-    }
-
-    if (search.trim()) {
-      const s = search.toLowerCase();
-      list = list.filter(
-        (c) =>
-          c.name.toLowerCase().includes(s) ||
-          c.description.toLowerCase().includes(s)
-      );
-    }
-
-    setFiltered(list);
-  }, [selectedCategory, search, communities]);
+export default function DiscoverPage({ searchParams }: Props) {
+  const { category, search } = use(searchParams);
 
   return (
-    <main className="max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div className="max-w-6xl mx-auto px-4 py-8 space-y-6 flex-1 h-auto">
       <h1 className="text-3xl font-bold text-center">
-        Descrubre las comunidades
+        Descubre las comunidades
       </h1>
       <p className="text-center text-sm text-muted-foreground">
         or{" "}
@@ -86,65 +55,23 @@ export default function DiscoverPage() {
       </p>
 
       <div className="max-w-md mx-auto">
-        <Input
+        <SearchInput 
           placeholder="Busca lo que quieras..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
         />
       </div>
 
       <div className="flex flex-wrap justify-center gap-2">
         {categories.map((cat) => (
-          <Badge
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            variant={selectedCategory === cat ? "default" : "outline"}
-            className="cursor-pointer"
-          >
-            {cat}
-          </Badge>
+          <SearchCommunitiesByCategory key={cat} category={cat} />
         ))}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-        {filtered.map((c, idx) => (
-          <Card key={c.id} className="p-0">
-            <Link href={`/community/${c.slug}`}>
-              <div className="relative w-full h-36 rounded-t overflow-hidden">
-                {c?.banner_url && (
-                  <img
-                    src={c?.banner_url}
-                    alt={c?.name}
-                    fill
-                    className="object-cover"
-                  />
-                )}
-              </div>
-              <CardContent className="space-y-2 p-4">
-                <div className="flex items-center gap-2">
-                  {c.logo_url && (
-                    <img
-                      src={c.logo_url}
-                      alt="Logo"
-                      width={24}
-                      height={24}
-                      className="rounded"
-                    />
-                  )}
-                  <h2 className="font-semibold text-sm">{c.name}</h2>
-                </div>
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {c.description}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {c.members_count} Members • {c.price}
-                </p>
-              </CardContent>
-            </Link>
-          </Card>
-        ))}
+          <Suspense fallback={<LoadingCard />} key={`${category}-${search}`}>
+            <CommunityCard category={category} search={search} />
+          </Suspense>
       </div>
-    </main>
+    </div>
   );
 }
 

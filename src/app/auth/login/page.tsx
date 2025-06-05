@@ -40,16 +40,7 @@ export default function LoginPage() {
           <Link
             href="/"
             className="flex items-center gap-2 font-medium rounded-md p-1 hover:bg-primary/80 transition-colors"
-          >
-            {/* <Image
-              src="/assets/logo.png"
-              alt="Logo"
-              width={40}
-              height={40}
-              className="w-10 object-cover"
-            /> */}
-            {/* Finanza.lat */}
-          </Link>
+          ></Link>
         </div>
         <div className="flex flex-1 items-center justify-center">
           <div className="w-full max-w-xs">
@@ -85,7 +76,7 @@ function LoginForm({
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        router.push("/dashboard");
+        router.push("/community");
       }
     });
   }, []);

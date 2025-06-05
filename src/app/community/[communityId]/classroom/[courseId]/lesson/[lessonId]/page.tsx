@@ -21,7 +21,7 @@ interface Course {
 }
 
 export default function LessonPage() {
-  const { courseId, lessonId } = useParams();
+  const { courseId, lessonId, communityId } = useParams();
   const [course, setCourse] = useState<Course | null>(null);
   const [lessons, setLessons] = useState<Lesson[]>([]);
   const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
@@ -107,7 +107,7 @@ export default function LessonPage() {
           {lessons.map((lesson) => (
             <Link
               key={lesson.id}
-              href={`/panel/classroom/${courseId}/lesson/${lesson.id}`}
+              href={`/community/${communityId}/classroom/${courseId}/lesson/${lesson.id}`}
               className={`block px-3 py-2 rounded-md text-sm transition ${
                 lesson.id === lessonId
                   ? "bg-yellow-100 font-medium"

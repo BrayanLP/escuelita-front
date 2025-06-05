@@ -104,10 +104,7 @@ export default function CourseDetailPage() {
                     : "No completada"}
                 </p>
               </div>
-              <Link
-                href={`/panel/classroom/${courseId}/lesson/${lesson.id}`}
-                className="mt-3"
-              >
+              <Link href={`${courseId}/lesson/${lesson.id}`} className="mt-3">
                 <Button size="sm" className="w-full" variant="outline">
                   Ver lección
                 </Button>

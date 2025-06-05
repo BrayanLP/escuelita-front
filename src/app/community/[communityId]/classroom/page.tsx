@@ -79,7 +79,7 @@ export default function ClassroomPage() {
             <CardContent className="p-4 space-y-4">
               <img width={"100%"} height={300} src={course.photo_url} />
               <div className="flex justify-between items-center">
-                <Link href={`/panel/classroom/${course.id}`} className="mt-3">
+                <Link href={`classroom/${course.id}`} className="mt-3">
                   <h2 className="text-xl font-bold">{course.title}</h2>
                 </Link>
                 <span className="text-sm text-muted-foreground">

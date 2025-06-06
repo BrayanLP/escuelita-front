@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
+import { useCommunity } from "@/context/community-context";
 
 const tabs = (id: string) => [
   { label: "Community", href: "/community/" + id },
@@ -15,8 +16,7 @@ const tabs = (id: string) => [
 export function MainNavbar() {
   const pathname = usePathname();
   const { communityId } = useParams();
-  console.log("communityId", communityId);
-
+  const { exitsUserPermission } = useCommunity();
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b bg-white">
       <div className="flex items-center gap-4">
@@ -24,22 +24,29 @@ export function MainNavbar() {
           Escuelita
         </Link>
         <nav className="hidden md:flex gap-3 text-sm">
-          {tabs(communityId).map((tab) => (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              className={`px-3 py-1 rounded-md hover:bg-muted transition ${
-                pathname === tab.href ? "bg-muted font-semibold" : ""
-              }`}
-            >
-              {tab.label}
-            </Link>
-          ))}
+          {exitsUserPermission &&
+            tabs(communityId).map((tab) => (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className={`px-3 py-1 rounded-md hover:bg-muted transition ${
+                  pathname === tab.href ? "bg-muted font-semibold" : ""
+                }`}
+              >
+                {tab.label}
+              </Link>
+            ))}
         </nav>
       </div>
-      <Button variant="outline" size="sm">
-        <Link href={"/community/" + communityId + "/profile"}>Perfil</Link>
-      </Button>
+      {exitsUserPermission ? (
+        <Button variant="outline" size="sm">
+          <Link href={"/community/" + communityId + "/profile"}>Perfil</Link>
+        </Button>
+      ) : (
+        <Button variant="outline" size="sm">
+          <Link href={"/auth/login"}>LOG IN</Link>
+        </Button>
+      )}
     </header>
   );
 }

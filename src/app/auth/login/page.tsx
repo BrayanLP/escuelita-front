@@ -76,7 +76,7 @@ function LoginForm({
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session) {
-        router.push("/community");
+        router.push("/");
       }
     });
   }, []);

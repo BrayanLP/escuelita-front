@@ -15,24 +15,5 @@ export default function PanelLayout({
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        router.push("/login");
-      } else {
-        setLoading(false);
-      }
-    });
-  }, []);
-
-  if (loading) return null;
-
-  return (
-    <div className="min-h-screen flex flex-col bg-muted">
-      <MainNavbar />
-      <div className="flex flex-1 max-w-7xl mx-auto w-full px-4 py-6 gap-6">
-        <main className="flex-1">{children}</main>
-      </div>
-    </div>
-  );
+  return <div className="min-h-screen flex flex-col bg-muted">{children}</div>;
 }

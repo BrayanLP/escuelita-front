@@ -25,7 +25,7 @@ export default function CommunityPage() {
   const [newPost, setNewPost] = useState("");
   const [newTitle, setNewTitle] = useState("");
   const { community, loading } = useCommunity();
-  console.log("community", community);
+
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -65,8 +65,6 @@ export default function CommunityPage() {
       fetchPosts();
     }
   };
-
-  if (loading) return <div>Cargando comunidad...</div>;
 
   return (
     <>

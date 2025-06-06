@@ -4,6 +4,7 @@
 import { use } from "react";
 import { CommunityProvider, useCommunity } from "@/context/community-context";
 import { useRouter, usePathname } from "next/navigation";
+import { MainNavbar } from "@/components/main-navbar";
 
 function ProtectedLayout({
   children,
@@ -18,15 +19,21 @@ function ProtectedLayout({
   const router = useRouter();
   const pathname = usePathname();
 
-  if (loading) {
+  console.log(
+    "existCommunity, exitsUserPermission",
+    existCommunity,
+    exitsUserPermission,
+    loading
+  );
+  if (loading === true) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <p className="text-muted-foreground">Cargando comunidad...</p>
+        <p className="text-muted-foreground">Cargando comunidad ...</p>
       </div>
     );
   }
 
-  if (!existCommunity) {
+  if (!loading && !existCommunity) {
     router.push("/");
     return null;
   }
@@ -51,8 +58,13 @@ export default function Layout({
   const { communityId } = use(params);
 
   return (
-    <CommunityProvider slug={communityId}>
-      <ProtectedLayout slug={communityId}>{children}</ProtectedLayout>
-    </CommunityProvider>
+    <>
+      <CommunityProvider slug={communityId}>
+        <MainNavbar />
+        <div className="flex-1">
+          <ProtectedLayout slug={communityId}>{children}</ProtectedLayout>
+        </div>
+      </CommunityProvider>
+    </>
   );
 }

@@ -29,7 +29,7 @@ export default function ProtectedLayout({
 
   return (
     <div className="min-h-screen flex flex-col">
-      <MainNavbar />
+      {/* <MainNavbar /> */}
       <main className="flex-1 bg-muted p-4">{children}</main>
     </div>
   );

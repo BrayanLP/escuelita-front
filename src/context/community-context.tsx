@@ -37,37 +37,53 @@ export const CommunityProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter();
   const [community, setCommunity] = useState<Community | null>(null);
   const [loading, setLoading] = useState(true);
-  const [existCommunity, setExistCommunity] = useState(true);
-  const [exitsUserPermission, setExitsUserPermission] = useState(true);
+  const [existCommunity, setExistCommunity] = useState(false);
+  const [exitsUserPermission, setExitsUserPermission] = useState(false);
+
   useEffect(() => {
     async function fetchCommunity() {
-      if (!user || !communityId) return;
+      setLoading(true);
+      setExistCommunity(false);
+      setExitsUserPermission(false);
 
+      // 1. Buscar comunidad por slug
       const { data: communityData, error: communityError } = await supabase
         .from("communities")
-        .select("*")
+        .select(
+          "*, creator:profiles!communities_user_id_fkey(full_name, avatar_url)"
+        )
         .eq("slug", communityId)
         .single();
 
       if (communityError || !communityData) {
         console.error("Comunidad no encontrada");
-        setExistCommunity(false);
+        setLoading(false);
         return;
       }
 
+      setCommunity(communityData);
+      setExistCommunity(true);
+
+      // 2. Si no hay usuario, solo devolver datos públicos
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      // 3. Validar membresía
       const { data: member, error: memberError } = await supabase
         .from("community_members")
-        .select("*")
+        .select("id")
         .eq("community_id", communityData.id)
         .eq("profile_id", user.id)
         .maybeSingle();
 
-      if (memberError || !member) {
-        console.warn("No es miembro");
+      if (!member || memberError) {
         setExitsUserPermission(false);
+      } else {
+        setExitsUserPermission(true);
       }
 
-      setCommunity(communityData);
       setLoading(false);
     }
 

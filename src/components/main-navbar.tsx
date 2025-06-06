@@ -38,7 +38,7 @@ export function MainNavbar() {
         </nav>
       </div>
       <Button variant="outline" size="sm">
-        Perfil
+        <Link href={"/community/" + communityId + "/profile"}>Perfil</Link>
       </Button>
     </header>
   );

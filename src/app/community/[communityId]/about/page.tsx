@@ -6,9 +6,13 @@ import { supabase } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Lock, Users, Tag, User } from "lucide-react";
+import { useAuth } from "@/context/auth-provider";
+import { JoinCommunityModal } from "@/components/join-community-modal";
 export default function CommunityAboutPage() {
   const { communityId } = useParams();
   const router = useRouter();
+  const { user } = useAuth();
+  const [open, setOpen] = useState(false);
   const [community, setCommunity] = useState<any | null>(null);
   const [member, setMember] = useState<any | null>(null);
   const [isMember, setIsMember] = useState(false);
@@ -21,7 +25,7 @@ export default function CommunityAboutPage() {
   });
   useEffect(() => {
     const fetch = async () => {
-      const { data: user } = await supabase.auth.getUser();
+      // const { data: user } = await supabase.auth.getUser();
 
       const { data: community } = await supabase
         .from("communities")
@@ -36,18 +40,29 @@ export default function CommunityAboutPage() {
 
       setCommunity(community);
 
+      supabase
+        .from("community_subscriptions")
+        .select("*")
+        .eq("community_id", community.id)
+        .eq("user_id", user?.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          console.log("data", data);
+          // setExistingRequest(!!data);
+        });
+
       console.log("user", user);
-      if (user?.user?.id) {
+      if (user?.id) {
         const { data: member } = await supabase
           .from("community_members")
-          .select("id")
+          .select("id, roles(*)")
           .eq("community_id", community.id)
-          .eq("profile_id", user.user.id)
+          .eq("profile_id", user.id)
           .maybeSingle();
 
         setMember(member);
         if (member) {
-          router.push(`/community/${communityId}`);
+          // router.push(`/community/${communityId}`);
           return;
         }
       }
@@ -59,7 +74,7 @@ export default function CommunityAboutPage() {
     fetch();
   }, [communityId]);
 
-  if (loading || !community) {
+  if (!community) {
     return <p className="text-center py-10">Cargando comunidad...</p>;
   }
 
@@ -68,10 +83,10 @@ export default function CommunityAboutPage() {
       <div className="w-full">
         <Card>
           <CardContent>
-            <h1 className="mt-4 mb-3 text-2xl font-bold">{community.name}</h1>
-            {community.banner_url && (
+            <h1 className="mt-4 mb-3 text-2xl font-bold">{community?.name}</h1>
+            {community?.banner_url && (
               <img
-                src={community.banner_url}
+                src={community?.banner_url}
                 alt="banner"
                 className="rounded-lg w-full object-cover h-100"
               />
@@ -152,10 +167,31 @@ export default function CommunityAboutPage() {
               </div>
             </div>
             <div className=" mb-2 border-b"></div>
-            <Button className="w-full">Unirme </Button>
+            {member ? (
+              <></>
+            ) : (
+              <>
+                {user?.id ? (
+                  <Button className="w-full" onClick={() => setOpen(true)}>
+                    Unirme PEN {community.price}/mes{" "}
+                  </Button>
+                ) : (
+                  <Button className="w-full">
+                    Unirme PEN {community.price}/mes{" "}
+                  </Button>
+                )}
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <JoinCommunityModal
+        open={open}
+        onClose={() => setOpen(false)}
+        community={community}
+        userId={user?.id ?? null}
+      />
     </div>
   );
 }

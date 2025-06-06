@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useParams } from "next/navigation";
 import { useCommunity } from "@/context/community-context";
+import { useAuth } from "@/context/auth-provider";
 
 const tabs = (id: string) => [
   { label: "Community", href: "/community/" + id },
@@ -16,7 +17,8 @@ const tabs = (id: string) => [
 export function MainNavbar() {
   const pathname = usePathname();
   const { communityId } = useParams();
-  const { exitsUserPermission } = useCommunity();
+  const { exitsUserPermission, loading } = useCommunity();
+  const { user } = useAuth();
   return (
     <header className="flex items-center justify-between px-6 py-4 border-b bg-white">
       <div className="flex items-center gap-4">
@@ -38,14 +40,20 @@ export function MainNavbar() {
             ))}
         </nav>
       </div>
-      {exitsUserPermission ? (
-        <Button variant="outline" size="sm">
-          <Link href={"/community/" + communityId + "/profile"}>Perfil</Link>
-        </Button>
-      ) : (
-        <Button variant="outline" size="sm">
-          <Link href={"/auth/login"}>LOG IN</Link>
-        </Button>
+      {!loading && (
+        <>
+          {exitsUserPermission || user?.id ? (
+            <Button variant="outline" size="sm">
+              <Link href={"/community/" + communityId + "/profile"}>
+                PERFIL
+              </Link>
+            </Button>
+          ) : (
+            <Button variant="outline" size="sm">
+              <Link href={"/auth/login"}>LOG IN</Link>
+            </Button>
+          )}
+        </>
       )}
     </header>
   );

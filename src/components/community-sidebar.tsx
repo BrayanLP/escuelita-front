@@ -14,6 +14,8 @@ interface Community {
   members_count: number;
   online_count: number;
   admins_count: number;
+  member_count: number;
+  admin_count: number;
 }
 
 export function CommunitySidebar() {
@@ -33,7 +35,6 @@ export function CommunitySidebar() {
 
     console.log("data fetchCommunity ====>", data);
     if (data) {
-      // puedes calcular online_count y admins_count si quieres aparte
       setCommunity({
         ...data,
         online_count: data.online_count ?? 0,
@@ -56,11 +57,21 @@ export function CommunitySidebar() {
       <h2 className="text-lg font-semibold">{community.name}</h2>
       <p className="text-sm text-muted-foreground">{community.description}</p>
 
-      <ul className="text-sm space-y-1 mt-2">
-        <li>👥 {community.members_count} miembros</li>
-        <li>🟢 {community.online_count} en línea</li>
-        <li>🛡️ {community.admins_count} administradores</li>
-      </ul>
+      <div className="border-t"></div>
+      <div className="text-sm space-y-1   grid grid-cols-3">
+        <div className="text-center border-r py-3">
+          <strong>{community?.member_count || "6.3k"}</strong>
+          <br></br> miembros
+        </div>
+        <div className="text-center  border-r py-3">
+          <strong> {community?.online_count || "51"}</strong>
+          <br></br> en línea
+        </div>
+        <div className="text-center  py-3">
+          <strong>{community?.admin_count || "2"}</strong>
+          <br></br> admins
+        </div>
+      </div>
 
       <Button className="w-full mt-4">Invitar personas</Button>
     </div>

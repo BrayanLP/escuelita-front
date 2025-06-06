@@ -67,7 +67,7 @@ export default function ClassroomPage() {
   };
 
   return (
-    <div className="space-y-6 grid grid-cols-3">
+    <div className="space-y-6 grid grid-cols-3 py-3 px-3">
       {courses.map((course) => {
         const lessons = lessonsByCourse[course.id] || [];
         const total = lessons.length;

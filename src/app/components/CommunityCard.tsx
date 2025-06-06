@@ -11,7 +11,7 @@ interface Props {
 
 async function fetchCommunities(category?: string, search?: string) {
   const supabase = await createClient();
-  let query = supabase.from("communities").select("*").eq("is_public", true);
+  let query = supabase.from("communities").select("*");
 
   if (category && category !== "Todos") {
     query = query.eq("category", category);

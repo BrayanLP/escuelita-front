@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { CommunitySidebar } from "@/components/community-sidebar";
 import { PostCard } from "@/components/post-card";
 import { PostComposer } from "@/components/post-composer";
+import { useCommunity } from "@/context/community-context";
 
 interface Post {
   id: string;
@@ -23,7 +24,8 @@ export default function CommunityPage() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [newPost, setNewPost] = useState("");
   const [newTitle, setNewTitle] = useState("");
-
+  const { community, loading } = useCommunity();
+  console.log("community", community);
   useEffect(() => {
     fetchPosts();
   }, []);
@@ -64,6 +66,8 @@ export default function CommunityPage() {
     }
   };
 
+  if (loading) return <div>Cargando comunidad...</div>;
+
   return (
     <>
       <div className="flex flex-1 max-w-7xl mx-auto w-full px-4 py-6 gap-6">
@@ -71,26 +75,6 @@ export default function CommunityPage() {
           <PostComposer
             submit={(values: any) => handleSubmit(values)}
           ></PostComposer>
-          {/* <Card>
-            <CardContent className="p-4">
-              <Input
-                placeholder="Titulo ..."
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-              ></Input>
-              <br />
-              <Input
-                placeholder="Escribe algo..."
-                value={newPost}
-                onChange={(e) => setNewPost(e.target.value)}
-              />
-              <div className="flex justify-end mt-2">
-                <Button size="sm" onClick={handleSubmit}>
-                  Publicar
-                </Button>
-              </div>
-            </CardContent>
-          </Card> */}
 
           {/* Lista de publicaciones */}
           {posts.map((post: any) => (

@@ -11,6 +11,7 @@ const tabs = [
   { label: "Miembros", segment: "members" },
   { label: "Comunidades", segment: "communities" },
   { label: "Pagos", segment: "billing" },
+  { label: "Metodos de Pagos", segment: "payment-methods" },
   { label: "Preferencias", segment: "settings" },
 ];
 

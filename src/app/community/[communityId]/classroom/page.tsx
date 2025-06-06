@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
 interface Lesson {
@@ -88,31 +87,6 @@ export default function ClassroomPage() {
               </div>
               <p className="text-muted-foreground">{course.description}</p>
               <Progress value={progress} />
-              {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
-                {lessons.map((lesson) => (
-                  <div
-                    key={lesson.id}
-                    className="border rounded px-4 py-3 bg-white shadow-sm flex flex-col justify-between"
-                  >
-                    <div>
-                      <p className="font-medium">{lesson.title}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {completed.includes(lesson.id)
-                          ? "✅ Completada"
-                          : "No completada"}
-                      </p>
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Link
-                        href={`/panel/classroom/lesson/${lesson.id}`}
-                        className="mt-3"
-                      >
-                        Ver lección
-                      </Link>
-                    </Button>
-                  </div>
-                ))}
-              </div> */}
             </CardContent>
           </Card>
         );

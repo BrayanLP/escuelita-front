@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase/client";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { CommunitySidebar } from "@/components/community-sidebar";
 import { PostCard } from "@/components/post-card";
 import { PostComposer } from "@/components/post-composer";

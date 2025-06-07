@@ -96,13 +96,13 @@ export default function CommunityAboutPage() {
               {/* Privado */}
               <div className="flex items-center gap-1">
                 <Lock className="w-4 h-4" />
-                <span>{community.is_public ? "Público" : "Privado"} </span>
+                <span>{community?.is_public ? "Público" : "Privado"} </span>
               </div>
 
               {/* Miembros */}
               <div className="flex items-center gap-1">
                 <Users className="w-4 h-4" />
-                <span>{info.memberCount} miembros</span>
+                <span>{info?.memberCount} miembros</span>
               </div>
 
               {/* Gratis o con precio */}
@@ -117,11 +117,11 @@ export default function CommunityAboutPage() {
               {/* Creador */}
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4"></User>
-                <span>Por {community.profile.full_name}</span>
+                <span>Por {community?.profile?.full_name}</span>
               </div>
             </div>
             <div className="mt-6 text-sm leading-relaxed text-foreground/90">
-              {community.description_large}
+              {community?.description_large}
             </div>
           </CardContent>
         </Card>

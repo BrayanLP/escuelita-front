@@ -10,10 +10,10 @@ export default function LandingPage() {
   return (
     <main className="flex flex-col items-center justify-center min-h-screen text-center px-4">
       <h1 className="text-2xl font-bold mb-2">
-        Build a community around your passion.
+        Construye una comunidad alrededor de tu pasión.
       </h1>
       <p className="text-muted-foreground mb-8">
-        Make money doing what you love.
+        Gana dinero haciendo lo que amas.
       </p>
 
       {/* Carrusel mock */}
@@ -25,9 +25,9 @@ export default function LandingPage() {
             className="w-full h-auto"
           />
           <div className="absolute top-2 right-2 bg-green-600 text-white text-xs px-3 py-1 rounded">
-            Calligraphy School
+            Escuela de Caligrafía
             <br />
-            Earns $6,237/month
+            Ganó S/5,237/mes
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export default function LandingPage() {
       </div>
 
       <Button size="lg" onClick={() => setOpen(true)}>
-        CREATE YOUR COMMUNITY
+        CREA TU COMUNIDAD
       </Button>
 
       <CreateCommunityModal open={open} onClose={() => setOpen(false)} />

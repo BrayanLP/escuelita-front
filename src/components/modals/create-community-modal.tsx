@@ -1,11 +1,25 @@
-import { supabase } from "@/lib/supabase/client";
-import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+"use client";
+
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { communitySchema, registerSchema } from "@/lib/create-community-schema";
+import { z } from "zod";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Router } from "lucide-react";
+import { supabase } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/auth-provider";
+import { slugify } from "@/lib/slugify";
 
 export function CreateCommunityModal({
   open,
@@ -17,21 +31,34 @@ export function CreateCommunityModal({
   const [view, setView] = useState<
     "register" | "pending-confirmation" | "create-community"
   >("register");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+
+  const registerForm = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
+  });
+
+  const communityForm = useForm<z.infer<typeof communitySchema>>({
+    resolver: zodResolver(communitySchema),
+  });
+
   const router = useRouter();
+  const { user } = useAuth();
+  const nameValue = communityForm.watch("name");
 
-  const [name, setName] = useState("");
-  const [slug, setSlug] = useState("");
+  useEffect(() => {
+    if (user?.id) {
+      setView("create-community");
+    }
+  }, [user?.id]);
 
-  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    if (nameValue) {
+      const generatedSlug = slugify(nameValue);
+      communityForm.setValue("slug", generatedSlug, { shouldValidate: true });
+    }
+  }, [nameValue]);
 
-  const handleRegister = async () => {
-    setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
-
-    setLoading(false);
-
+  const handleRegister = async (data: z.infer<typeof registerSchema>) => {
+    const { error } = await supabase.auth.signUp(data);
     if (error) {
       toast.error("Error al registrarte", { description: error.message });
     } else {
@@ -40,103 +67,133 @@ export function CreateCommunityModal({
     }
   };
 
-  const handleCreateCommunity = async () => {
-    setLoading(true);
+  const handleCreateCommunity = async (
+    data: z.infer<typeof communitySchema>
+  ) => {
     const { data: session } = await supabase.auth.getSession();
-
     const user = session?.session?.user;
 
     if (!user) {
       toast.error("Primero inicia sesión o verifica tu correo.");
-      setLoading(false);
       return;
     }
 
     const { error } = await supabase.from("communities").insert({
-      name,
-      slug,
+      name: data.name,
+      slug: data.slug,
       user_id: user.id,
     });
-
-    setLoading(false);
 
     if (error) {
       toast.error("Error al crear comunidad", { description: error.message });
     } else {
       toast.success("¡Comunidad creada!");
       onClose();
-      router.push("/community/" + slug + "/profile/settings");
+      router.push("/community/" + data.slug + "/profile/settings");
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
+      <DialogTitle> </DialogTitle>
       <DialogContent className="max-w-md space-y-5">
         {view === "register" && (
-          <>
+          <Form {...registerForm}>
             <h2 className="text-lg font-bold text-center">
               Regístrate para crear tu comunidad
             </h2>
-            <Input
-              placeholder="Correo"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <Input
-              placeholder="Contraseña"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <Button
-              className="w-full"
-              disabled={loading}
-              onClick={handleRegister}
+
+            <form
+              onSubmit={registerForm.handleSubmit(handleRegister)}
+              className="space-y-4"
             >
-              {loading ? "Enviando..." : "Registrarme"}
-            </Button>
-          </>
+              <FormField
+                control={registerForm.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <label htmlFor="email">Correo electrónico</label>
+                    <FormControl>
+                      <Input id="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={registerForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <label htmlFor="password">Contraseña</label>
+                    <FormControl>
+                      <Input id="password" type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button className="w-full" type="submit">
+                Registrarme
+              </Button>
+            </form>
+          </Form>
         )}
 
         {view === "pending-confirmation" && (
-          <div className="text-center">
+          <div className="text-center space-y-4">
             <h2 className="text-lg font-semibold">Revisa tu correo</h2>
             <p className="text-sm text-muted-foreground">
-              Te hemos enviado un enlace de confirmación. Una vez verificado,
-              vuelve aquí para continuar.
+              Te hemos enviado un enlace de confirmación.
             </p>
-            <Button
-              variant="outline"
-              className="mt-4"
-              onClick={() => setView("create-community")}
-            >
+            <Button onClick={() => setView("create-community")}>
               Ya confirmé, continuar
             </Button>
           </div>
         )}
 
         {view === "create-community" && (
-          <>
-            <h2 className="text-lg font-bold text-center">Crear comunidad</h2>
-            <Input
-              placeholder="Nombre de la comunidad"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-            <Input
-              placeholder="Slug único (ej. mi-comunidad)"
-              value={slug}
-              onChange={(e) => setSlug(e.target.value)}
-            />
-            <Button
-              className="w-full"
-              disabled={loading}
-              onClick={handleCreateCommunity}
+          <Form {...communityForm}>
+            <h2 className="text-lg font-bold text-center">Crear Comunidad</h2>
+            <form
+              onSubmit={communityForm.handleSubmit(handleCreateCommunity)}
+              className="space-y-4"
             >
-              {loading ? "Creando..." : "Crear Comunidad"}
-            </Button>
-          </>
+              <FormField
+                control={communityForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <label htmlFor="name">Nombre de la comunidad</label>
+                    <FormControl>
+                      <Input id="name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={communityForm.control}
+                name="slug"
+                render={({ field }) => (
+                  <FormItem>
+                    <label htmlFor="slug">Slug único</label>
+                    <FormControl>
+                      <Input id="slug" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <Button className="w-full" type="submit">
+                Crear Comunidad
+              </Button>
+            </form>
+          </Form>
         )}
       </DialogContent>
     </Dialog>
